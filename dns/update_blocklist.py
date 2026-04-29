@@ -11,9 +11,9 @@ logger = logging.getLogger(__name__)
 
 BLOCKLIST_DIR = "/app/blocklists"
 BLOCKLIST_URLS = {
-    "ads": "https://raw.githubusercontent.com/AdAway/adaway.github.io/master/hosts.txt",
-    "porn": "https://github.com/blocklistproject/Lists/raw/master/lists/porn-all.txt",
-    "gamble": "https://github.com/blocklistproject/Lists/raw/master/lists/gambling-all.txt",
+    "ads": "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+    "porn": "https://raw.githubusercontent.com/nicholasrequests/blocklist/main/porn.txt",
+    "gamble": "https://raw.githubusercontent.com/nicholasrequests/blocklist/main/gambling.txt",
 }
 
 
@@ -35,7 +35,6 @@ def download_blocklist(url, category):
         return True
     except Exception as e:
         logger.error(f"Failed to download {category}: {e}")
-        # If file exists, keep old version
         if os.path.exists(filepath):
             logger.info(f"Keeping existing {category} blocklist")
             return True

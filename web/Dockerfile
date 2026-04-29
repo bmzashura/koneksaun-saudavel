@@ -10,4 +10,4 @@ COPY . .
 RUN mkdir -p /app/data
 
 # Run init DB + Flask
-CMD ["python", "-c", "from app import init_db; init_db(); from app import app; app.run(host='0.0.0.0', port=8080)"]
+CMD python -c "from app import app, init_db; init_db(); app.run(host='0.0.0.0', port=8080)"

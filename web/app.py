@@ -31,7 +31,8 @@ def close_db(error):
 
 def init_db():
     """Initialize database tables"""
-    db = get_db()
+    with app.app_context():
+        db = get_db()
     db.executescript("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

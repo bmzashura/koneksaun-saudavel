@@ -85,15 +85,15 @@ def update_blocklists():
     load_blocklist()
 
 
-def resolve_domain(domain, upstream):
-    """Resolve domain via upstream DNS"""
+def resolve_domain(data, upstream):
+    """Forward raw DNS query to upstream and return response"""
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(5)
-        sock.sendto(domain.encode(), (upstream, 53))
-        data, _ = sock.recvfrom(512)
+        sock.sendto(data, (upstream, 53))
+        result, _ = sock.recvfrom(512)
         sock.close()
-        return data
+        return result
     except Exception as e:
         logger.debug(f"Upstream {upstream} failed: {e}")
         return None
@@ -153,16 +153,26 @@ def handle_query(data, addr, sock):
         
         if blocked:
             logger.info(f"BLOCKED [{blocked_category}]: {normalized_domain}")
-            # Return NXDOMAIN
-            response = data[:2] + b"\x81\x83" + data[4:12] + b"\x00\x00\x00\x00\x00\x00\x00\x00"
-            sock.sendto(response, addr)
+            # Build proper NXDOMAIN response
+            import struct
+            # Extract QTYPE/QCLASS from query
+            qtype = struct.unpack('!H', data[pos:pos+2])[0]
+            qclass = struct.unpack('!H', data[pos+2:pos+4])[0]
+            # NXDOMAIN flags: QR=1, AA=1, RD=1, RA=1, RCODE=3
+            nxdomain = (
+                data[:2] +  # Transaction ID
+                struct.pack('!H', 0x8183) +  # Flags
+                struct.pack('!HHHH', 1, 0, 0, 0) +  # Header
+                data[12:pos+4]  # Question section
+            )
+            sock.sendto(nxdomain, addr)
         else:
             # Forward to upstream
             for upstream in UPSTREAM_DNS:
                 result = resolve_domain(data, upstream)
                 if result:
-                    # Modify response to indicate success
-                    response = data[:2] + b"\x81\xa0" + data[4:12] + result[2:]
+                    # Forward raw upstream response back to client, preserving original transaction ID
+                    response = data[:2] + result[2:]
                     sock.sendto(response, addr)
                     logger.debug(f"FORWARDED: {normalized_domain} -> {upstream}")
                     break
