@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Review Reports - Koneksaun Saudavel{% endblock %}
+{% block page_title %}Review Reports{% endblock %}
+{% block page_subtitle %}Manage domain reports{% endblock %}
+{% block content %}
+
+<div class="content-card" style="margin-bottom:1rem;">
+    <div class="card-header"><i class="bi bi-hourglass me-2"></i>Pending Review</div>
+    <div class="card-body p-0">
+        <table class="table mb-0">
+            <thead><tr><th>Domain</th><th>Category</th><th>Reporter</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="pending-body"><tr><td colspan="5" class="text-center text-muted py-4">Loading...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="content-card" style="margin-bottom:1rem;">
+    <div class="card-header"><i class="bi bi-check-circle me-2"></i>Approved Reports</div>
+    <div class="card-body p-0">
+        <table class="table mb-0">
+            <thead><tr><th>Domain</th><th>Category</th><th>Reporter</th><th>Date</th><th>Action</th></tr></thead>
+            <tbody id="approved-body"><tr><td colspan="5" class="text-center text-muted py-4">Loading...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="content-card" style="margin-bottom:1rem;">
+    <div class="card-header"><i class="bi bi-x-circle me-2"></i>Rejected Reports</div>
+    <div class="card-body p-0">
+        <table class="table mb-0">
+            <thead><tr><th>Domain</th><th>Category</th><th>Reporter</th><th>Date</th><th>Notes</th></tr></thead>
+            <tbody id="rejected-body"><tr><td colspan="5" class="text-center text-muted py-4">Loading...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="msg-box" style="padding:0.5rem;font-size:0.85rem;"></div>
+
+<script>
+async function loadAll() {
+    try {
+        const r = await fetch('/api/v1/reports', { credentials: 'include' });
+        const d = await r.json();
+        const all = d.reports || [];
+        
+        const pend = all.filter(r => r.status === 'pending');
+        const approv = all.filter(r => r.status === 'approved');
+        const rejct = all.filter(r => r.status === 'rejected');
+        
+        // Pending
+        const pendBody = document.getElementById('pending-body');
+        if (pend.length === 0) {
+            pendBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No pending reports</td></tr>';
+        } else {
+            pendBody.innerHTML = pend.map(r => {
+                const domainEsc = r.domain.replace(/'/g, "\\'");
+                return '<tr>' +
+                    '<td><code>' + r.domain + '</code></td>' +
+                    '<td><span class="badge badge-rejected">' + r.category + '</span></td>' +
+                    '<td>' + (r.reporter || '') + '</td>' +
+                    '<td>' + (r.created_at || '') + '</td>' +
+                    '<td><button class="btn btn-sm btn-success me-1" onclick="doApprove(' + r.id + ', \'' + domainEsc + '\')">Approve</button>' +
+                    '<button class="btn btn-sm btn-danger" onclick="doReject(' + r.id + ', \'' + domainEsc + '\')">Reject</button></td></tr>';
+            }).join('');
+        }
+        
+        // Approved
+        const apprBody = document.getElementById('approved-body');
+        if (approv.length === 0) {
+            apprBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No approved reports</td></tr>';
+        } else {
+            apprBody.innerHTML = approv.map(r => {
+                const domainEsc = r.domain.replace(/'/g, "\\'");
+                return '<tr>' +
+                    '<td><code>' + r.domain + '</code></td>' +
+                    '<td><span class="badge badge-rejected">' + r.category + '</span></td>' +
+                    '<td>' + (r.reporter || '') + '</td>' +
+                    '<td>' + (r.created_at || '') + '</td>' +
+                    '<td><button class="btn btn-sm btn-warning" onclick="doRemove(' + r.id + ', \'' + domainEsc + '\', \'' + r.category + '\', this)">Remove from Blocklist</button></td></tr>';
+            }).join('');
+        }
+        
+        // Rejected
+        const rejBody = document.getElementById('rejected-body');
+        if (rejct.length === 0) {
+            rejBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No rejected reports</td></tr>';
+        } else {
+            rejBody.innerHTML = rejct.map(r => {
+                return '<tr>' +
+                    '<td><code>' + r.domain + '</code></td>' +
+                    '<td><span class="badge badge-rejected">' + r.category + '</span></td>' +
+                    '<td>' + (r.reporter || '') + '</td>' +
+                    '<td>' + (r.created_at || '') + '</td>' +
+                    '<td>' + (r.reviewer_notes || '') + '</td></tr>';
+            }).join('');
+        }
+    } catch(e) {
+        document.getElementById('msg-box').innerHTML = '<span style="color:red;">Error: ' + e.message + '</span>';
+    }
+}
+
+async function doApprove(id, domain) {
+    const msg = document.getElementById('msg-box');
+    msg.textContent = 'Approving ' + domain + '...';
+    try {
+        const r = await fetch('/api/v1/reports/' + id + '/approve', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({notes: 'Approved via admin'})
+        });
+        const j = await r.json();
+        msg.textContent = j.message || ('Done: ' + r.status);
+        loadAll();
+    } catch(e) {
+        msg.textContent = 'Error: ' + e.message;
+    }
+}
+
+async function doReject(id, domain) {
+    const msg = document.getElementById('msg-box');
+    msg.textContent = 'Rejecting ' + domain + '...';
+    try {
+        const r = await fetch('/api/v1/reports/' + id + '/reject', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({notes: 'Rejected via admin'})
+        });
+        const j = await r.json();
+        msg.textContent = j.message || ('Done: ' + r.status);
+        loadAll();
+    } catch(e) {
+        msg.textContent = 'Error: ' + e.message;
+    }
+}
+
+async function doRemove(id, domain, category, btn) {
+    if (!confirm('Remove ' + domain + ' from ' + category + ' blocklist?')) return;
+    const msg = document.getElementById('msg-box');
+    msg.textContent = 'Removing ' + domain + '...';
+    btn.disabled = true;
+    try {
+        const r = await fetch('/api/v1/blocklist/' + domain, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({category: category, notes: 'Removed via admin'})
+        });
+        const j = await r.json();
+        msg.textContent = j.message || ('Done: ' + r.status);
+        loadAll();
+    } catch(e) {
+        msg.textContent = 'Error: ' + e.message;
+        btn.disabled = false;
+    }
+}
+
+loadAll();
+</script>
+{% endblock %}

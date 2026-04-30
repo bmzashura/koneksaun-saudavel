@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Submit Report - Koneksaun Saudavel{% endblock %}
+{% block page_title %}Submit Report{% endblock %}
+{% block page_subtitle %}Report a domain for blocking{% endblock %}
+{% block content %}
+<div class="content-card mb-4">
+            <div class="card-header"><i class="bi bi-flag me-2"></i>Submit Domain Report</div>
+            <div class="card-body">
+                <form id="report-form">
+                    <div class="mb-3"><label class="form-label">Domain Name</label><input type="text" class="form-control" id="domain" placeholder="example.com" required></div>
+                    <div class="mb-3"><label class="form-label">Reason (optional)</label><textarea class="form-control" id="reason" rows="2" placeholder="Why should this domain be blocked?"></textarea></div>
+                    <button type="submit" class="btn btn-primary">Submit Report</button>
+                </form>
+            </div>
+        </div>
+        <div class="content-card">
+            <div class="card-header"><i class="bi bi-info-circle me-2"></i>How It Works</div>
+            <div class="card-body"><ol class="mb-0 text-muted" style="font-size:0.875rem;"><li class="mb-2">Submit a domain for review</li><li class="mb-2">Admin reviews your report</li><li class="mb-2">If approved, domain is added to blocklist</li></ol></div>
+        </div>
+        <script>
+        document.getElementById('report-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+            const r = await fetch('/api/v1/reports', {method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({domain:document.getElementById('domain').value,reason:document.getElementById('reason').value})});
+            if(r.ok){alert('Report submitted!'); e.target.reset();}else{alert('Error submitting report');}
+            btn.disabled = false; btn.innerHTML = 'Submit Report';
+        });
+        </script>
+{% endblock %}

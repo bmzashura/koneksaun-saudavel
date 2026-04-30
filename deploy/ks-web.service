@@ -1,0 +1,24 @@
+[Unit]
+Description=Koneksaun Saudavel Web Application
+Documentation=https://github.com/bmzashura/koneksaun-saudavel
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/koneksaun-saudavel
+Environment="PATH=%h/koneksaun-saudavel/venv/bin"
+ExecStart=%h/koneksaun-saudavel/venv/bin/python3 -m flask run --host=0.0.0.0 --port=8080
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ks-web
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=%h/koneksaun-saudavel
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

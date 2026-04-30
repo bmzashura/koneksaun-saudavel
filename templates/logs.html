@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Query Logs - Koneksaun Saudavel{% endblock %}
+{% block page_title %}Query Logs{% endblock %}
+{% block page_subtitle %}Recent DNS queries{% endblock %}
+{% block content %}
+<div class="content-card">
+            <div class="card-header">DNS Query Log</div>
+            <div class="card-body p-0"><div style="max-height:60vh;overflow-y:auto;"><table class="table mb-0"><thead><tr><th>Time</th><th>Domain</th><th>Category</th><th>Status</th></tr></thead><tbody id="logs-body"><tr><td colspan="4" class="text-center text-muted py-4">Loading...</td></tr></tbody></table></div></div>
+            <script>
+            (async function(){
+                const tb=document.getElementById('logs-body');
+                try{
+                    const r=await fetch('/api/v1/logs?limit=500',{credentials:'include'});
+                    const d=await r.json();
+                    if(d.logs&&d.logs.length){
+                        tb.innerHTML=d.logs.map(l=>'<tr><td style="font-size:0.8rem;color:#64748b;">'+l.timestamp+'</td><td><code>'+l.domain+'</code></td><td><span class="badge '+(l.category?'badge-rejected':'badge-active')+'">'+(l.category||'n/a')+'</span></td><td><span class="badge '+(l.blocked?'badge-rejected':'badge-active')+'">'+(l.blocked?'BLOCKED':'ALLOWED')+'</span></td></tr>').join('');
+                    }else{
+                        tb.innerHTML='<tr><td colspan="4" class="text-center text-muted py-4">No logs yet</td></tr>';
+                    }
+                }catch(e){tb.innerHTML='<tr><td colspan="4" class="text-danger">Error loading logs</td></tr>';}
+            })();
+            </script>
+{% endblock %}

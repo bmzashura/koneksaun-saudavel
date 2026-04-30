@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Blocked - Koneksaun Saudavel{% endblock %}
+{% block page_title %}Blocked{% endblock %}
+{% block page_subtitle %}Access denied{% endblock %}
+{% block content %}
+<div class="content-card text-center py-5">
+            <div style="font-size:4rem;margin-bottom:1rem;">🛑</div>
+            <h3 class="mb-3">Domain Blocked</h3>
+            <p class="text-muted mb-2">The domain <strong id="blocked-domain"></strong> has been blocked.</p>
+            <p class="text-muted mb-4">Category: <span id="blocked-category" class="badge badge-rejected"></span></p>
+            <a href="/dashboard" class="btn btn-primary"><i class="bi bi-house me-2"></i>Go to Dashboard</a>
+        </div>
+        <script>
+        document.getElementById('blocked-domain').textContent = new URLSearchParams(window.location.search).get('d') || 'this domain';
+        document.getElementById('blocked-category').textContent = new URLSearchParams(window.location.search).get('c') || 'blocked';
+        </script>
+{% endblock %}

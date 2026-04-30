@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Settings - Koneksaun Saudavel{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block page_subtitle %}System configuration{% endblock %}
+{% block content %}
+        <!-- Block Categories -->
+        <div class="content-card mb-4">
+            <div class="card-header"><i class="bi bi-grid me-2"></i>Block Categories</div>
+            <div class="card-body" id="category-list">
+                <span class="text-muted">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Upstream DNS -->
+        <div class="content-card mb-4">
+            <div class="card-header"><i class="bi bi-server me-2"></i>Upstream DNS Servers</div>
+            <div class="card-body">
+                <p class="text-muted mb-3" style="font-size:0.875rem;">Servers used to resolve non-blocked domains.</p>
+                <ul class="list-group mb-0">
+                    <li class="list-group-item" style="background:#f8f9fa;border:none;">1.1.1.1 (Cloudflare)</li>
+                    <li class="list-group-item" style="background:#f8f9fa;border:none;">8.8.8.8 (Google)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Service Info -->
+        <div class="content-card">
+            <div class="card-header"><i class="bi bi-info-circle me-2"></i>Service Information</div>
+            <div class="card-body">
+                <div class="stat-row"><span>Version</span><span class="badge badge-active">v1.0.0</span></div>
+                <div class="stat-row"><span>Server Time</span><span id="server-time">-</span></div>
+                <div class="stat-row"><span>Database</span><span class="badge badge-active">Connected</span></div>
+                <div class="stat-row"><span>Blocked Domains</span><span class="badge badge-active">744,610</span></div>
+            </div>
+        </div>
+
+        <script>
+        async function loadCategories() {
+            const r = await fetch('/api/v1/categories');
+            const cats = await r.json();
+            document.getElementById('category-list').innerHTML = cats.map(c => {
+                const name = c.display_name || c.name;
+                const count = c.domain_count || c.domains || 0;
+                const updated = c.updated_at ? c.updated_at.substring(0,10) : 'never';
+                const enabled = (c.enabled !== undefined) ? c.enabled : true;
+                return '<div class="stat-row">' +
+                    '<div>' +
+                        '<strong>'+name+'</strong>' +
+                        '<div class="text-muted" style="font-size:0.78rem;">'+count.toLocaleString()+' domains</div>' +
+                        '<div class="text-muted" style="font-size:0.72rem;">Updated: '+updated+'</div>' +
+                    '</div>' +
+                    '<div class="d-flex align-items-center gap-2">' +
+                        '<span class="badge '+(enabled?'badge-active':'badge-disabled')+'">'+(enabled?'Enabled':'Disabled')+'</span>' +
+                        '<button class="btn btn-sm btn-outline-ks" onclick="updateBlocklist(\''+c.name+'\')">' +
+                            '<i class="bi bi-arrow-clockwise"></i> Update' +
+                        '</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        async function updateBlocklist(name) {
+            if (!confirm('Update blocklist for ' + name + '? This may take a moment.')) return;
+            const btn = event.target.closest('button');
+            const orig = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            try {
+                const r = await fetch('/api/v1/categories/' + name + '/update-blocklist', {method:'POST'});
+                const d = await r.json();
+                alert(d.error || ('Updated: ' + (d.domains||'OK') + ' domains for ' + name));
+                loadCategories();
+            } catch(e) { alert('Update failed: ' + e); }
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        }
+
+        document.getElementById('server-time').textContent = new Date().toLocaleString();
+        loadCategories();
+        </script>
+{% endblock %}

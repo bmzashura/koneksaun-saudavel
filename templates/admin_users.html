@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}User Management - Koneksaun Saudavel{% endblock %}
+{% block page_title %}User Management{% endblock %}
+{% block page_subtitle %}Manage registered users{% endblock %}
+{% block content %}
+        <div class="content-card">
+            <div class="card-header"><i class="bi bi-people me-2"></i>Registered Users</div>
+            <div class="card-body p-0">
+                <table class="table mb-0">
+                    <thead><tr><th>Username</th><th>Role</th><th>Created</th><th>Last Login</th><th>Actions</th></tr></thead>
+                    <tbody id="users-body"><tr><td colspan="5" class="text-center text-muted py-4">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+        <script>
+        async function loadUsers() {
+            const r = await fetch('/api/v1/users');
+            const users = await r.json();
+            const tb = document.getElementById('users-body');
+            if (users.length) {
+                tb.innerHTML = users.map(u =>
+                    '<tr>' +
+                    '<td><strong>'+u.username+'</strong></td>' +
+                    '<td><span class="badge badge-'+u.role+'">'+u.role+'</span></td>' +
+                    '<td style="font-size:0.8rem;color:#64748b;">'+(u.created_at||'')+'</td>' +
+                    '<td style="font-size:0.8rem;color:#64748b;">'+(u.last_login||'Never')+'</td>' +
+                    '<td><button class="btn btn-sm btn-danger" onclick="deleteUser('+u.id+',\''+u.username+'\')">Delete</button></td>' +
+                    '</tr>'
+                ).join('');
+            } else {
+                tb.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No users</td></tr>';
+            }
+        }
+        async function deleteUser(userId, username) {
+            if (!confirm('Delete user ' + username + '? This cannot be undone.')) return;
+            const r = await fetch('/api/v1/users/'+userId, {method:'DELETE'});
+            const d = await r.json();
+            if (!r.ok) alert('Error: ' + (d.error||'Unknown'));
+            loadUsers();
+        }
+        loadUsers();
+        </script>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Koneksaun Saudavel{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}System overview and statistics{% endblock %}
+{% block content %}
+<div class="row mb-4">
+            <div class="col-md-3"><div class="card-stat"><div class="d-flex justify-content-between"><div><div class="stat-value" id="total-blocked">-</div><div class="stat-label">Total Blocked</div></div><div class="stat-icon"><i class="bi bi-shield-x"></i></div></div></div></div>
+            <div class="col-md-3"><div class="card-stat"><div class="d-flex justify-content-between"><div><div class="stat-value" id="blocked-24h">-</div><div class="stat-label">Last 24 Hours</div></div><div class="stat-icon"><i class="bi bi-clock-history"></i></div></div></div></div>
+            <div class="col-md-3"><div class="card-stat"><div class="d-flex justify-content-between"><div><div class="stat-value" id="domains-count">-</div><div class="stat-label">Blocked Domains</div></div><div class="stat-icon"><i class="bi bi-list-check"></i></div></div></div></div>
+            <div class="col-md-3"><div class="card-stat"><div class="d-flex justify-content-between"><div><div class="stat-value">v1.0</div><div class="stat-label">Status</div></div><div class="stat-icon"><i class="bi bi-check-circle"></i></div></div></div></div>
+        </div>
+        <div class="content-card mb-4">
+            <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Top Blocked Domains (24h)</div>
+            <div class="card-body"><table class="table mb-0"><thead><tr><th>Domain</th><th>Count</th></tr></thead><tbody id="top-domains"><tr><td colspan="2" class="text-muted text-center">Loading...</td></tr></tbody></table></div>
+        </div>
+        <div class="content-card">
+            <div class="card-header"><i class="bi bi-grid me-2"></i>Block Categories</div>
+            <div class="card-body" id="categories-list"><span class="text-muted">Loading...</span></div>
+        </div>
+        <script>
+        async function loadStats() {
+            const r = await fetch('/api/v1/stats');
+            const d = await r.json();
+            document.getElementById('total-blocked').textContent = (d.total_blocked||0).toLocaleString();
+            document.getElementById('blocked-24h').textContent = (d.recent_blocked_24h||0).toLocaleString();
+            document.getElementById('domains-count').textContent = (d.blocked_domains_total||0).toLocaleString();
+            const tb = document.getElementById('top-domains');
+            if(d.top_domains&&d.top_domains.length){tb.innerHTML=d.top_domains.map(x=>'<tr><td><code>'+x.domain+'</code></td><td>'+x.count.toLocaleString()+'</td></tr>').join('');}else{tb.innerHTML='<tr><td colspan="2" class="text-muted text-center">No data</td></tr>';}
+        }
+        async function loadCategories() {
+            const r = await fetch('/api/v1/categories');
+            const cats = await r.json();
+            document.getElementById('categories-list').innerHTML = cats.map(c=>'<div class="d-flex justify-content-between align-items-center p-2 mb-2" style="background:#f8f9fa;border-radius:8px;"><div><strong>'+(c.display_name||c.name)+'</strong><div class="text-muted" style="font-size:0.78rem;">'+(c.domains||0).toLocaleString()+' domains</div></div><span class="badge '+(c.enabled?'badge-active':'badge-disabled')+'">'+(c.enabled?'Active':'Disabled')+'</span></div>').join('');
+        }
+        loadStats(); loadCategories(); setInterval(loadStats,30000);
+        </script>
+{% endblock %}

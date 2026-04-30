@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local env
+.env
+.env.local
+
+# DB
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Temp/dev files
+*.tmp
+*.bak
+new_*.py
+*_backup.py
+
+# Tests (don't ship with production)
+tests/
+test_*.py
+
+# One-off migrations (applied via code)
+migrations/
+
+# Extra/unused
+reports_extra.py

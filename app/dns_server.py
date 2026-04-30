@@ -3,6 +3,7 @@
 Listens on 0.0.0.0:53, blocks domains via configurable blocklists."""
 
 import socket
+import sqlite3
 import struct
 import random
 import logging
@@ -28,12 +29,13 @@ logger = logging.getLogger(__name__)
 # Config
 DNS_PORT = 53
 BLOCKLIST_DIR = Path(__file__).parent.parent / "db" / "blocklists"
-PID_FILE = Path(__file__).parent.parent / "dns.pid"
+PID_FILE = Path("/opt/ks/koneksaun-saudavel/dns.pid")
 
 _blocklists = {
     'ads': set(),
     'porn': set(),
-    'gambling': set()
+    'gambling': set(),
+    'other': set()
 }
 
 _blocklist_globs = {
@@ -83,7 +85,7 @@ def reload_blocklists():
     """Reload blocklists (can be called from signal handler)."""
     logger.info("Reloading blocklists...")
     load_blocklists()
-    logger.info(f"Blocklists reloaded: ads={len(_blocklists['ads'])}, porn={len(_blocklists['porn'])}, gambling={len(_blocklists['gambling'])}")
+    logger.info(f"Blocklists reloaded: ads={len(_blocklists['ads'])}, porn={len(_blocklists['porn'])}, gambling={len(_blocklists['gambling'])}, other={len(_blocklists['other'])}")
 
 
 def is_domain_blocked(domain: str) -> tuple[bool, str]:
@@ -209,7 +211,10 @@ def handle_dns_query(query_data: bytes, client_addr: tuple) -> bytes:
         if blocked:
             _stats['blocked'] += 1
             logger.info(f"BLOCKED [{category}] {domain} from {client_addr[0]}")
+            log_query(domain, True, category, client_addr[0])
             return send_nxdomain(query_data)
+
+    log_query(domain, False, '', client_addr[0])
 
     _stats['forwarded'] += 1
     response, _ = forward_to_upstream(query_data)
@@ -223,13 +228,14 @@ def handle_dns_query(query_data: bytes, client_addr: tuple) -> bytes:
 def log_query(domain: str, blocked: bool, category: str, client_ip: str):
     """Log DNS query to database."""
     try:
-        from app.database import get_db
-        db = get_db()
-        db.execute("""
+        db_path = Path(__file__).parent.parent / "db" / "koneksaun.db"
+        conn = sqlite3.connect(str(db_path))
+        conn.execute("""
             INSERT INTO dns_logs (domain, blocked, category, client_ip)
             VALUES (?, ?, ?, ?)
-        """, (domain, blocked, category if blocked else None, client_ip))
-        db.commit()
+        """, (domain, 1 if blocked else 0, category if blocked else None, client_ip))
+        conn.commit()
+        conn.close()
     except Exception as e:
         logger.debug(f"Failed to log query: {e}")
 
@@ -254,7 +260,7 @@ def main():
     load_blocklists()
 
     logger.info(f"DNS listening on 0.0.0.0:{DNS_PORT}")
-    logger.info(f"Blocklists: ads={len(_blocklists['ads'])}, porn={len(_blocklists['porn'])}, gambling={len(_blocklists['gambling'])}")
+    logger.info(f"Blocklists: ads={len(_blocklists['ads'])}, porn={len(_blocklists['porn'])}, gambling={len(_blocklists['gambling'])}, other={len(_blocklists['other'])}")
 
     # Setup signals
     signal.signal(signal.SIGTERM, signal_handler)

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Koneksaun Saudavel{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-bg: #1a1f2e;
+            --sidebar-width: 220px;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --card-bg: #fff;
+        }
+        * { box-sizing: border-box; }
+        body { background: #f0f2f5; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; }
+        a { text-decoration: none; }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--sidebar-bg);
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            width: var(--sidebar-width);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+        .sidebar-brand {
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 1.25rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .sidebar-brand .emoji { font-size: 1.4rem; }
+        .sidebar-brand .name { font-size: 0.9rem; }
+        .sidebar-brand .sub { font-size: 0.7rem; color: var(--text-muted); font-weight: 400; }
+
+        .sidebar-nav { flex: 1; padding: 0.75rem 0.5rem; overflow-y: auto; list-style: none; margin: 0; }
+        .sidebar-nav li { margin-bottom: 2px; }
+        .sidebar-nav a {
+            color: var(--text-muted);
+            padding: 0.6rem 0.75rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            font-size: 0.85rem;
+            transition: all 0.15s ease;
+        }
+        .sidebar-nav a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .sidebar-nav a.active { color: #fff; background: rgba(59,130,246,0.25); }
+        .sidebar-nav a i { font-size: 1rem; width: 20px; text-align: center; }
+        .sidebar-nav .section-label {
+            color: rgba(148,163,184,0.5);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 1rem 0.75rem 0.25rem;
+        }
+
+        .sidebar-footer {
+            padding: 0.75rem 0.5rem;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .sidebar-user-info {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            padding: 0 0.75rem 0.4rem;
+        }
+        .sidebar-logout {
+            color: #f87171 !important;
+            font-size: 0.85rem !important;
+        }
+        .sidebar-logout:hover { background: rgba(248,113,113,0.1) !important; }
+
+        /* Main */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .bottom-nav a {
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            transition: all 0.15s;
+        }
+        .bottom-nav a:hover, .bottom-nav a.active { color: var(--accent); background: rgba(59,130,246,0.06); }
+        .bottom-nav a i { font-size: 1.1rem; }
+
+        /* Page header */
+        .page-header { margin-bottom: 1.5rem; }
+        .page-header h2 { font-size: 1.4rem; font-weight: 700; color: #1a202c; margin: 0 0 4px; }
+        .page-header p { color: var(--text-muted); font-size: 0.85rem; margin: 0; }
+
+        /* Cards */
+        .card-ks {
+            background: var(--card-bg);
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .card-stat { padding: 1.25rem; border-radius: 12px; background: var(--card-bg); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .stat-value { font-size: 1.75rem; font-weight: 700; color: #1a202c; line-height: 1; }
+        .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
+        .stat-icon { font-size: 1.5rem; opacity: 0.7; }
+
+        /* Tables */
+        .table-wrap { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .table { margin: 0; font-size: 0.875rem; }
+        .table thead th { background: #f8f9fa; border-bottom: 2px solid #e9ecef; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; padding: 0.75rem 1rem; }
+        .table td { padding: 0.75rem 1rem; vertical-align: middle; }
+        .table tbody tr:hover { background: #f8f9fa; }
+
+        /* Badges */
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-admin { background: #7c3aed; color: #fff; }
+        .badge-user { background: var(--accent); color: #fff; }
+        .badge-pending { background: #f59e0b; color: #fff; }
+        .badge-approved { background: #10b981; color: #fff; }
+        .badge-rejected { background: #ef4444; color: #fff; }
+        .badge-active { background: #10b981; color: #fff; }
+        .badge-disabled { background: #6b7280; color: #fff; }
+
+        /* Content area — Bootstrap component overrides */
+        .content-card {
+            background: var(--card-bg);
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .content-card .card-header {
+            background: transparent;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 1rem 1.25rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #1a202c;
+        }
+        .content-card .card-body { padding: 1.25rem; }
+
+        /* Tables in content */
+        .content-table { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+        .content-table .table { margin-bottom: 0; font-size: 0.875rem; }
+        .content-table .table thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+        }
+        .content-table .table td { padding: 0.75rem 1rem; vertical-align: middle; }
+        .content-table .table tbody tr:hover { background: #f8f9fa; }
+
+        /* Buttons */
+        .btn { border-radius: 8px; font-weight: 600; font-size: 0.85rem; padding: 0.5rem 1rem; }
+        .btn-primary { background: var(--accent); border-color: var(--accent); }
+        .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+        .btn-secondary { background: #e2e8f0; color: #475569; border: none; }
+        .btn-secondary:hover { background: #cbd5e1; color: #1a202c; }
+        .btn-danger { background: #ef4444; border: none; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-success { background: #10b981; border: none; }
+        .btn-success:hover { background: #059669; }
+        .btn-sm { padding: 0.35rem 0.85rem; font-size: 0.8rem; border-radius: 7px; }
+
+        /* Badges */
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+
+        /* Forms */
+        .form-control { background: #f8f9fa; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.5rem 0.75rem; font-size: 0.875rem; color: #1a202c; }
+        .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .form-select { background: #f8f9fa; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.5rem 0.75rem; font-size: 0.875rem; }
+        .form-label { font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 0.3rem; }
+
+        /* Alert */
+        .alert { border: none; border-radius: 10px; font-size: 0.875rem; }
+
+        /* Section labels in content */
+        .content-section { margin-bottom: 1.5rem; }
+        .content-section h5 { font-size: 0.95rem; font-weight: 700; color: #1a202c; margin-bottom: 0.75rem; }
+
+        /* Stat rows */
+        .stat-row { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; }
+        .stat-row:last-child { border-bottom: none; }
+
+        /* Buttons */
+        .btn-sm-ks { padding: 0.35rem 0.85rem; border-radius: 7px; font-size: 0.8rem; font-weight: 600; border: none; }
+        .btn-primary-ks { background: var(--accent); color: #fff; }
+        .btn-primary-ks:hover { background: var(--accent-hover); color: #fff; }
+        .btn-danger-ks { background: #ef4444; color: #fff; }
+        .btn-danger-ks:hover { background: #dc2626; color: #fff; }
+        .btn-success-ks { background: #10b981; color: #fff; }
+        .btn-success-ks:hover { background: #059669; color: #fff; }
+        .btn-outline-ks { background: transparent; border: 1.5px solid #e2e8f0; color: #64748b; }
+        .btn-outline-ks:hover { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.05); }
+
+        /* Status dot */
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .dot-green { background: #10b981; }
+        .dot-red { background: #ef4444; }
+        .dot-yellow { background: #f59e0b; }
+
+        /* Category cards */
+        .category-card { background: var(--card-bg); border-radius: 10px; padding: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+        .toggle-switch { position: relative; width: 42px; height: 24px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #cbd5e1; border-radius: 24px; transition: 0.2s; }
+        .toggle-slider:before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+        input:checked + .toggle-slider { background: #10b981; }
+        input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+        /* Form controls */
+        .form-control-ks { background: #f8f9fa; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 0.5rem 0.75rem; font-size: 0.875rem; color: #1a202c; }
+        .form-control-ks:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); outline: none; }
+        .form-label-ks { font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 0.3rem; }
+
+        /* Alert */
+        .alert-ks { border: none; border-radius: 10px; font-size: 0.875rem; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <span class="emoji">🜃</span>
+            <div>
+                <div class="name">Koneksaun Saudavel</div>
+                <div class="sub">DNS Content Blocker</div>
+            </div>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="/dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+            <li class="section-label">User</li>
+            <li id="nav-reports-user" style="display:none;"><a href="/reports"><i class="bi bi-flag"></i> My Reports</a></li>
+            <li id="nav-report-submit" style="display:none;"><a href="/reports/submit"><i class="bi bi-plus-circle"></i> Submit Report</a></li>
+            <li class="section-label">Admin</li>
+            <li id="nav-admin-reports" style="display:none;"><a href="/admin/reports"><i class="bi bi-shield-check"></i> Review Reports</a></li>
+            <li id="nav-admin-users" style="display:none;"><a href="/admin/users"><i class="bi bi-people"></i> User Management</a></li>
+            <li class="section-label">System</li>
+            <li><a href="/logs"><i class="bi bi-list-ul"></i> Query Logs</a></li>
+            <li><a href="/settings"><i class="bi bi-gear"></i> Settings</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="sidebar-user-info"><span id="current-user">—</span></div>
+            <form id="logout-form" method="POST" action="/logout" style="display:none;"></form>
+            <a class="d-flex align-items-center gap-2 px-3 py-2 rounded-8 sidebar-logout" href="#"
+               onclick="document.getElementById('logout-form').submit(); return false;">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h2>{% block page_title %}Dashboard{% endblock %}</h2>
+            <p>{% block page_subtitle %}Overview and statistics{% endblock %}</p>
+        </div>
+        {% block content %}{% endblock %}
+    </main>
+
+
+    <!-- Auth + menu logic -->
+    <script>
+    fetch('/api/v1/auth/me', { credentials: 'include' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.user) {
+                document.getElementById('current-user').textContent = data.user.username + ' (' + data.user.role + ')';
+                document.getElementById('nav-reports-user').style.display = '';
+                document.getElementById('nav-report-submit').style.display = '';
+                if (data.user.role === 'admin') {
+                    document.getElementById('nav-admin-reports').style.display = '';
+                    document.getElementById('nav-admin-users').style.display = '';
+                }
+            }
+        })
+        .catch(() => { window.location.href = '/login'; });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

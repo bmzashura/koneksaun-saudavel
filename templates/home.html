@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Koneksaun Saudavel - DNS Content Blocker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a56db;
+            --dark: #0f172a;
+            --accent: #3b82f6;
+        }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        .hero-section {
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 1rem;
+        }
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: #94a3b8;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+        .shield-icon {
+            font-size: 5rem;
+            color: #3b82f6;
+            margin-bottom: 1.5rem;
+        }
+        .stats-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+        .stats-label {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+        .feature-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            height: 100%;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: #3b82f6;
+        }
+        .feature-icon {
+            font-size: 2rem;
+            color: #3b82f6;
+            margin-bottom: 1rem;
+        }
+        .feature-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.75rem;
+        }
+        .feature-desc {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .section-title {
+            color: #fff;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .info-section {
+            background: rgba(255,255,255,0.03);
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding: 60px 0;
+        }
+        .info-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+        .info-title {
+            color: #3b82f6;
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .info-text {
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+        .info-list li {
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .cta-section {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            margin: 3rem 0;
+        }
+        .cta-title {
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .cta-desc {
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 1.5rem;
+        }
+        .btn-cta {
+            background: #fff;
+            color: #1e40af;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .btn-cta:hover {
+            background: #1e40af;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(30,64,175,0.4);
+        }
+        .btn-outline-cta {
+            border: 2px solid rgba(255,255,255,0.5);
+            color: #fff;
+            font-weight: 600;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.25s ease;
+            background: transparent;
+        }
+        .btn-outline-cta:hover {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: #fff !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59,130,246,0.4);
+        }
+        footer {
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding: 2rem 0;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+        .badge-protected {
+            background: #22c55e;
+            color: #fff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .navbar-dark-custom {
+            background: rgba(15,23,42,0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .nav-link-custom {
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            transition: color 0.2s;
+        }
+        .nav-link-custom {
+            position: relative;
+            transition: color 0.3s ease, transform 0.2s ease;
+        }
+        .nav-link-custom:hover {
+            color: #fff;
+            transform: translateX(4px);
+        }
+        .nav-link-custom::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #3b82f6;
+            transition: width 0.3s ease;
+        }
+        .nav-link-custom:hover::after {
+            width: 100%;
+        }
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+        /* Navbar brand animation */
+        .navbar-brand {
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+        .navbar-brand:hover {
+            transform: scale(1.05);
+            color: #3b82f6 !important;
+        }
+        .how-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .step-number {
+            background: #1e40af;
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+        .step-content h5 {
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .step-content p {
+            color: #94a3b8;
+            font-size: 0.875rem;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand navbar-dark navbar-dark-custom py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-shield-check me-2"></i>Koneksaun Saudavel
+            </a>
+            <div class="d-flex gap-3 align-items-center">
+                <a class="nav-link-custom" href="#features">Features</a>
+                <a class="nav-link-custom" href="#how-it-works">How It Works</a>
+                <a class="nav-link-custom" href="#report">Report Domain</a>
+                <!-- Logged out state -->
+                <span id="nav-login">
+                    <a class="btn btn-outline-cta btn-sm" href="/login">Login</a>
+                </span>
+                <!-- Logged in state -->
+                <span id="nav-dashboard" style="display:none;">
+                    <a class="nav-link-custom" href="/dashboard">Dashboard</a>
+                </span>
+                <span id="nav-logout" style="display:none;">
+                    <form id="logout-form-home" method="POST" action="/logout" style="display:none;"></form>
+                    <a class="nav-link-custom" href="#" onclick="document.getElementById('logout-form-home').submit(); return false;" style="color:#f56565;">
+                        Logout
+                    </a>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="shield-icon">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <h1 class="hero-title">Koneksaun Saudavel</h1>
+            <p class="hero-subtitle">
+                DNS-based content blocker untuk jaringan rumah & kantor.
+                Blokir iklan, konten dewasa, dan situs gambling —
+                untuk internet yang lebih aman dan bertanggung jawab.
+            </p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap mb-4">
+                <span class="badge-protected">
+                    <i class="bi bi-check-circle me-1"></i>744K+ Domains Protected
+                </span>
+                <span class="badge-protected">
+                    <i class="bi bi-shield-lock me-1"></i>Privacy-First
+                </span>
+            </div>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="/login" class="btn btn-cta">Mulai Perlindungan</a>
+                <a href="#how-it-works" class="btn btn-outline-cta">Pelajari Lebih Lanjut</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-3 col-6">
+                    <div class="stats-card">
+                        <div class="stats-number">744,610</div>
+                        <div class="stats-label">Domains Terblokir</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stats-card">
+                        <div class="stats-number">3</div>
+                        <div class="stats-label">Kategori Pemblokiran</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stats-card">
+                        <div class="stats-number">100%</div>
+                        <div class="stats-label">Lokal — No Cloud</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stats-card">
+                        <div class="stats-number">0</div>
+                        <div class="stats-label">Client IP Dilog</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="py-5" id="features">
+        <div class="container">
+            <h2 class="section-title">Fitur Perlindungan</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-ban"></i></div>
+                        <div class="feature-title">Blokir Iklan & Tracker</div>
+                        <div class="feature-desc">
+                            Hapus iklan dan pelacak di seluruh perangkat yang terhubung ke jaringan.
+                            Browsing lebih cepat dan lebih privat.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-lock"></i></div>
+                        <div class="feature-title">Konten Dewasa</div>
+                        <div class="feature-desc">
+                            Filter otomatis untuk memblokir situs dewasa.
+                            Lindungi keluarga dari konten yang tidak pantas.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-dice-5"></i></div>
+                        <div class="feature-title">Situs Gambling</div>
+                        <div class="feature-desc">
+                            Blokir situs betting dan gambling.
+                            Untuk lingkungan yang lebih sehat dan fokus.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-speedometer2"></i></div>
+                        <div class="feature-title">Network-Wide Protection</div>
+                        <div class="feature-desc">
+                            Satu server melindungi semua perangkat —
+                            PC, smartphone, tablet, smart TV, dll.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-eye-slash"></i></div>
+                        <div class="feature-title">Privasi Terjamin</div>
+                        <div class="feature-desc">
+                            Tidak ada logging IP client. Tidak ada pelacakan.
+                            Semua query DNS diproses secara lokal.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-arrow-repeat"></i></div>
+                        <div class="feature-title">Blocklist Dinamis</div>
+                        <div class="feature-desc">
+                            Domain yang dilaporkan oleh pengguna akan ditinjau
+                            dan ditambahkan ke blocklist jika diperlukan.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="info-section" id="how-it-works">
+        <div class="container">
+            <h2 class="section-title">Cara Kerja</h2>
+            <div class="row g-5">
+                <div class="col-lg-6">
+                    <div class="info-card">
+                        <div class="info-title"><i class="bi bi-diagram-3 me-2"></i>Arsitektur</div>
+                        <div class="info-text">
+                            <p>Setiap perangkat yang terhubung ke jaringan akan menggunakan DNS server untuk mengubah nama domain menjadi alamat IP. Koneksaun Saudavel bekerja sebagai DNS proxy yang mencegat setiap permintaan dan memverifikasi domain terhadap blocklist lokal. Jika domain ada di daftar blokir, query diblokir. Jika tidak, permintaan diteruskan ke upstream DNS server.</p>
+                            <ul class="info-list mt-3">
+                                <li><strong>Client</strong> → Kirim query DNS</li>
+                                <li><strong>CoreDNS</strong> → Terima query di port 53</li>
+                                <li><strong>DNS Filter</strong> → Cek domain terhadap blocklist</li>
+                                <li><strong>Block</strong> → NXDOMAIN untuk domain terblokir</li>
+                                <li><strong>Forward</strong> → Limpahkan ke upstream DNS</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="info-card">
+                        <div class="info-title"><i class="bi bi-list-check me-2"></i>Blocklist</div>
+                        <div class="info-text">
+                            <p>Koleksi domain dikurasi dari berbagai sumber terpercaya:</p>
+                            <ul class="info-list mt-3">
+                                <li><strong>Ads & Trackers</strong> — 241,828 domains dari AdGuard SDNSFilter</li>
+                                <li><strong>Adult Content</strong> — 500,282 domains dari BlocklistProject</li>
+                                <li><strong>Gambling</strong> — 2,500 domains dari blocklistproject</li>
+                            </ul>
+                            <p class="mt-3">Total: <strong>744,610 domains</strong> terus diperbarui untuk perlindungan maksimal.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="container">
+        <div class="cta-section">
+            <div class="cta-title">Lindungi Jaringanmu Sekarang</div>
+            <div class="cta-desc">
+                Lindungi semua perangkat di jaringan rumah atau kantor<br>
+                dengan DNS filtering yang cepat dan privat.
+            </div>
+            <a href="/login" class="btn btn-cta">Daftar & Mulai</a>
+        </div>
+    </section>
+
+    <!-- Report Section -->
+    <section class="info-section" id="report">
+        <div class="container">
+            <h2 class="section-title">Cara Melaporkan Domain</h2>
+            <div class="row g-5">
+                <div class="col-lg-6">
+                    <div class="info-card">
+                        <div class="info-title"><i class="bi bi-send me-2"></i>Langkah Pelaporan</div>
+                        <div class="info-text">
+                            <div class="how-step">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h5>Login ke Dashboard</h5>
+                                    <p>Masuk dengan akun yang sudah terdaftar di halaman login.</p>
+                                </div>
+                            </div>
+                            <div class="how-step">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h5>Buka Halaman Report</h5>
+                                    <p>Klik menu "Report" di sidebar dashboard untuk membuka form pelaporan.</p>
+                                </div>
+                            </div>
+                            <div class="how-step">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h5>Isi Form</h5>
+                                    <p>Masukkan domain yang ingin diblokir, pilih kategori, dan jelaskan alasannya.</p>
+                                </div>
+                            </div>
+                            <div class="how-step">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <h5>Submit & Tunggu Review</h5>
+                                    <p>Setelahsubmit, tim admin akan meninjau laporan dan menambahkan ke blocklist jika valid.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="info-card">
+                        <div class="info-title"><i class="bi bi-info-circle me-2"></i>Informasi Penting</div>
+                        <div class="info-text">
+                            <p>Berikut beberapa hal yang perlu diketahui sebelum melaporkan domain:</p>
+                            <ul class="info-list mt-3">
+                                <li>Domain akan direview oleh tim admin dalam 1x24 jam</li>
+                                <li>Pastikan domain benar-benar termasuk kategori yang dipilih</li>
+                                <li>Report yang tidak valid atau tidak Relevan tidak akan diproses</li>
+                                <li>Semua user bisa Submit report — tidak terbatas pada admin</li>
+                                <li>Anda dapat melihat status report di halaman "Reports"</li>
+                            </ul>
+                            <div class="mt-4 p-3 rounded" style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3);">
+                                <strong style="color:#3b82f6">Tips:</strong>
+                                <p style="margin-bottom:0; margin-top:0.5rem; color:#94a3b8; font-size:0.85rem">
+                                    Sebelum melaporkan, coba visit domain terlebih dahulu untuk memastikan kontennya memang tidak pantas atau melanggar kebijakan penggunaan internet yang bertanggung jawab.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Internet Safety Tips -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="section-title">Tips Internet Aman & Bertanggung Jawab</h2>
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-people"></i></div>
+                        <div class="feature-title">Awasi Anak-Anak</div>
+                        <div class="feature-desc">
+                            Gunakan tools parental control dan tetap awasi aktivitas online anak-anak. Komunikasi terbuka tentang risiko internet juga sangat penting.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-key"></i></div>
+                        <div class="feature-title">Gunakan Password Kuat</div>
+                        <div class="feature-desc">
+                            Buat password yang unik untuk setiap akun. Gunakan minimal 12 karakter dengan kombinasi huruf, angka, dan simbol.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-shield-check"></i></div>
+                        <div class="feature-title">Hindari Situs Tidak Aman</div>
+                        <div class="feature-desc">
+                            Periksa URL sebelum memasukkan informasi sensitif. Pastikan ada HTTPS dan simbol gembok di address bar browser.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="feature-card">
+                        <div class="feature-icon"><i class="bi bi-clock"></i></div>
+                        <div class="feature-title">Batasi Waktu Layar</div>
+                        <div class="feature-desc">
+                            Tetapkan batas waktu penggunaan internet untuk diri sendiri dan keluarga. Gunakan fitur screen time di masing-masing perangkat.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p class="mb-2">
+                <i class="bi bi-shield-check me-1"></i>
+                Koneksaun Saudavel — DNS Content Blocker
+            </p>
+            <p class="mb-0">
+                Untuk internet yang lebih aman dan bertanggung jawab.
+                <a href="/login" style="color:#64748b;text-decoration:underline;">Dashboard Login</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function updateHomeNav() {
+        fetch('/api/v1/auth/me')
+            .then(r => r.json())
+            .then(data => {
+                if (data.authenticated) {
+                    document.getElementById('nav-login').style.display = 'none';
+                    document.getElementById('nav-dashboard').style.display = '';
+                    document.getElementById('nav-logout').style.display = '';
+                }
+            })
+            .catch(() => {
+                // Not logged in - show login button
+                document.getElementById('nav-login').style.display = '';
+                document.getElementById('nav-dashboard').style.display = 'none';
+                document.getElementById('nav-logout').style.display = 'none';
+            });
+    }
+    updateHomeNav();
+</script>
+</body>
+</html>
