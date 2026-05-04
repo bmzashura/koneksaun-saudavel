@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from app.database import get_db
-from app.auth import login_required, admin_required, get_current_user
+from app.auth import login_required, admin_required, get_current_user, hash_password, verify_password
 
 reports_bp = Blueprint('reports', __name__)
 
@@ -291,10 +291,79 @@ def list_users():
     """Admin: list all users."""
     db = get_db()
     users = db.execute("""
-        SELECT id, username, email, role, created_at, last_login
+        SELECT id, username, email, role, status, created_at, last_login
         FROM users ORDER BY created_at DESC
     """).fetchall()
     return jsonify([dict(u) for u in users])
+
+
+@reports_bp.route('/api/v1/users/<int:user_id>/approve', methods=['POST'])
+@admin_required
+def approve_user(user_id):
+    """Admin: approve pending user -> set status='active'."""
+    db = get_db()
+    target = db.execute('SELECT id, status FROM users WHERE id = ?', (user_id,)).fetchone()
+    if not target:
+        return jsonify({'error': 'User not found'}), 404
+    if target['status'] == 'active':
+        return jsonify({'error': 'User already active'}), 400
+    db.execute("UPDATE users SET status = 'active' WHERE id = ?", (user_id,))
+    db.commit()
+    return jsonify({'success': True, 'user_id': user_id, 'status': 'active'})
+
+
+@reports_bp.route('/api/v1/users/<int:user_id>/reject', methods=['POST'])
+@admin_required
+def reject_user(user_id):
+    """Admin: reject user -> delete account."""
+    user = get_current_user()
+    if user_id == user['id']:
+        return jsonify({'error': 'Cannot reject yourself'}), 400
+    db = get_db()
+    target = db.execute('SELECT id FROM users WHERE id = ?', (user_id,)).fetchone()
+    if not target:
+        return jsonify({'error': 'User not found'}), 404
+    db.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    db.commit()
+    return jsonify({'success': True})
+
+
+@reports_bp.route('/api/v1/users/<int:user_id>/disable', methods=['POST'])
+@admin_required
+def disable_user(user_id):
+    """Admin: disable user account."""
+    user = get_current_user()
+    if user_id == user['id']:
+        return jsonify({'error': 'Cannot disable yourself'}), 400
+    db = get_db()
+    db.execute("UPDATE users SET status = 'disabled' WHERE id = ?", (user_id,))
+    db.commit()
+    return jsonify({'success': True, 'user_id': user_id, 'status': 'disabled'})
+
+
+@reports_bp.route('/api/v1/users/<int:user_id>/enable', methods=['POST'])
+@admin_required
+def enable_user(user_id):
+    """Admin: re-enable disabled user account."""
+    db = get_db()
+    db.execute("UPDATE users SET status = 'active' WHERE id = ?", (user_id,))
+    db.commit()
+    return jsonify({'success': True, 'user_id': user_id, 'status': 'active'})
+
+
+@reports_bp.route('/api/v1/users/<int:user_id>/reset-password', methods=['PUT'])
+@admin_required
+def reset_user_password(user_id):
+    """Admin: reset user password to a temp password."""
+    data = request.get_json()
+    new_password = data.get('password', '').strip()
+    if not new_password or len(new_password) < 6:
+        return jsonify({'error': 'Password must be at least 6 characters'}), 400
+    db = get_db()
+    pw_hash, _ = hash_password(new_password)
+    db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (pw_hash, user_id))
+    db.commit()
+    return jsonify({'success': True, 'user_id': user_id})
 
 
 @reports_bp.route('/api/v1/users/<int:user_id>/role', methods=['PUT'])
