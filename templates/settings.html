@@ -43,9 +43,13 @@
                 const count = c.domain_count || c.domains || 0;
                 const updated = c.updated_at ? c.updated_at.substring(0,10) : 'never';
                 const enabled = (c.enabled !== undefined) ? c.enabled : true;
+                const sourceLink = c.blocklist_url
+                    ? '<a href="'+c.blocklist_url+'" target="_blank" class="source-link" style="font-size:0.72rem;color:#3b82f6;"><i class="bi bi-box-arrow-up-right"></i> Source</a>'
+                    : '';
                 return '<div class="stat-row">' +
                     '<div>' +
                         '<strong>'+name+'</strong>' +
+                        sourceLink +
                         '<div class="text-muted" style="font-size:0.78rem;">'+count.toLocaleString()+' domains</div>' +
                         '<div class="text-muted" style="font-size:0.72rem;">Updated: '+updated+'</div>' +
                     '</div>' +
