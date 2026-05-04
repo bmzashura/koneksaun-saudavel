@@ -56,6 +56,13 @@ mkdir -p /opt/ks
 rm -rf "${APP_DIR}"
 cp -r "${SRC_DIR}" "${APP_DIR}"
 
+log "Creating blocklists subdirectory and moving blocklist files..."
+mkdir -p "${APP_DIR}/db/blocklists"
+mv "${APP_DIR}"/db/ads.txt "${APP_DIR}"/db/blocklists/ 2>/dev/null || true
+mv "${APP_DIR}"/db/porn.txt "${APP_DIR}"/db/blocklists/ 2>/dev/null || true
+mv "${APP_DIR}"/db/gambling.txt "${APP_DIR}"/db/blocklists/ 2>/dev/null || true
+mv "${APP_DIR}"/db/other.txt "${APP_DIR}"/db/blocklists/ 2>/dev/null || true
+
 log "Creating Python virtual environment..."
 cd "${APP_DIR}"
 python3 -m venv venv
