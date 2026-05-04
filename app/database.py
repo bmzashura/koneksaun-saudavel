@@ -51,7 +51,7 @@ def init_db(database_path):
          'https://easylist.to/easylist/easylist.txt',
          'Block pornographic websites'),
         ('gambling', 'Gambling', 1,
-         'https://raw.githubusercontent.com/nicholasrequests/blocklist/main/gambling.txt',
+         'https://blocklistproject.github.io/Lists/gambling.txt',
          'Block gambling and betting sites'),
     ]
 
