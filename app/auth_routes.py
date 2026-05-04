@@ -222,3 +222,86 @@ def register_submit():
     except Exception as e:
         flash(str(e), 'error')
         return redirect('/register')
+
+
+# ==================== PROFILE ====================
+
+@auth_bp.route('/profile')
+@login_required
+def profile_page():
+    """User profile page with password change."""
+    db = get_db()
+    current = get_current_user()
+    users = db.execute(
+        "SELECT id, username, email, role, status, created_at, last_login FROM users ORDER BY username"
+    ).fetchall()
+    return render_template('profile.html',
+                         user=current,
+                         all_users=[dict(u) for u in users])
+
+
+@auth_bp.route('/profile/password', methods=['POST'])
+@login_required
+def change_password():
+    """User changes their own password."""
+    current = get_current_user()
+    current_password = request.form.get('current_password', '')
+    new_password = request.form.get('new_password', '')
+    confirm_password = request.form.get('confirm_password', '')
+
+
+    if not new_password or len(new_password) < 6:
+        flash('New password must be at least 6 characters.', 'error')
+        return redirect('/profile')
+
+    if new_password != confirm_password:
+        flash('New password and confirmation do not match.', 'error')
+        return redirect('/profile')
+
+    db = get_db()
+    user = db.execute(
+        "SELECT id, password_hash FROM users WHERE id = ?", (current['id'],)
+    ).fetchone()
+
+    if not verify_password(current_password, user['password_hash']):
+        flash('Current password is incorrect.', 'error')
+        return redirect('/profile')
+
+    pw_hash, _ = hash_password(new_password)
+    db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (pw_hash, current['id']))
+    db.commit()
+
+    flash('Password updated successfully.', 'info')
+    return redirect('/profile')
+
+
+
+@auth_bp.route('/profile/admin-reset', methods=['POST'])
+@login_required
+@admin_required
+def admin_reset_password():
+    """Admin resets password for another user."""
+    target_id = request.form.get('target_user_id', type=int)
+    new_password = request.form.get('new_password', '').strip()
+    current_user = get_current_user()
+
+    if not target_id or target_id == current_user['id']:
+        flash('Invalid target user.', 'error')
+        return redirect('/profile')
+
+    if not new_password or len(new_password) < 6:
+        flash('Password must be at least 6 characters.', 'error')
+        return redirect('/profile')
+
+    db = get_db()
+    target = db.execute("SELECT id FROM users WHERE id = ?", (target_id,)).fetchone()
+    if not target:
+        flash('User not found.', 'error')
+        return redirect('/profile')
+
+    pw_hash, _ = hash_password(new_password)
+    db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (pw_hash, target_id))
+    db.commit()
+
+    flash(f'Password for user ID {target_id} reset successfully.', 'info')
+    return redirect('/profile')
