@@ -47,11 +47,39 @@
                     </div>
                     <div class="modal-footer border-secondary">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-outline-cta" onclick="doResetPassword()">Reset Password</button>
+                        <button type="button" class="btn btn-primary" onclick="doResetPassword()">
+                            <i class="bi bi-check2 me-1"></i>Reset Password
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
+
+        <style>
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .action-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+        .btn-approve { background: rgba(34,197,94,0.2); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+        .btn-reject { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .btn-enable { background: rgba(34,197,94,0.2); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+        .btn-disable { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+        .btn-reset { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+        .role-admin { background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.3); padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+        .role-user { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+        .status-pending { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+        .status-active { background: rgba(34,197,94,0.2); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+        .status-disabled { background: rgba(107,114,128,0.2); color: #9ca3af; border: 1px solid rgba(107,114,128,0.3); padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+        </style>
 
         <script>
         async function loadUsers() {
@@ -60,39 +88,51 @@
             const tb = document.getElementById('users-body');
             if (users.length) {
                 tb.innerHTML = users.map(u => {
-                    const statusBadge = {
-                        'pending': '<span class="badge badge-pending">PENDING</span>',
-                        'active':  '<span class="badge badge-active">ACTIVE</span>',
-                        'disabled': '<span class="badge badge-disabled">DISABLED</span>'
-                    }[u.status] || '<span class="badge">'+u.status+'</span>';
+                    const statusIcon = {
+                        'pending': '<i class="bi bi-hourglass-split"></i>',
+                        'active':  '<i class="bi bi-check-circle-fill"></i>',
+                        'disabled': '<i class="bi bi-ban-fill"></i>'
+                    }[u.status] || '';
+                    const statusClass = 'status-' + (u.status || 'other');
+                    const statusLabel = u.status ? u.status.toUpperCase() : u.status;
 
-                    const roleSelect = u.role === 'admin'
-                        ? '<span class="badge badge-admin">ADMIN</span>'
-                        : `<select class="form-select form-select-sm" style="width:auto;background:rgba(59,130,246,0.2);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);" onchange="changeRole(${u.id}, this.value)">
-                             <option value="user" selected>USER</option>
-                             <option value="admin">ADMIN</option>
-                           </select>`;
+                    const roleIcon = u.role === 'admin'
+                        ? '<i class="bi bi-shield-lock-fill"></i>'
+                        : '<i class="bi bi-person-fill"></i>';
+                    const roleClass = u.role === 'admin' ? 'role-admin' : 'role-user';
 
-                    let actions = statusBadge === '<span class="badge badge-active">ACTIVE</span>'
-                        ? `<button class="btn btn-sm btn-outline-warning" onclick="disableUser(${u.id})" title="Disable"><i class="bi bi-x-circle"></i></button>`
-                        : statusBadge === '<span class="badge badge-disabled">DISABLED</span>'
-                        ? `<button class="btn btn-sm btn-outline-success" onclick="enableUser(${u.id})" title="Enable"><i class="bi bi-check-circle"></i></button>`
-                        : '';
-
-                    actions += `<button class="btn btn-sm btn-outline-light" onclick="showResetPwd(${u.id},'${u.username}')" title="Reset Password"><i class="bi bi-key"></i></button>`;
-
+                    let actions = '';
                     if (u.status === 'pending') {
-                        actions = `<button class="btn btn-sm btn-success" onclick="approveUser(${u.id})"><i class="bi bi-check"></i> Approve</button>
-                                   <button class="btn btn-sm btn-danger" onclick="rejectUser(${u.id},'${u.username}')"><i class="bi bi-x"></i> Reject</button>`;
+                        actions += `<button class="action-btn btn-approve" onclick="approveUser(${u.id})" title="Approve user">
+                                        <i class="bi bi-check-circle-fill"></i> Approve
+                                     </button>
+                                     <button class="action-btn btn-reject" onclick="rejectUser(${u.id},'${u.username}')" title="Reject & delete">
+                                        <i class="bi bi-trash-fill"></i> Reject
+                                     </button>`;
+                    } else if (u.status === 'active') {
+                        actions += `<button class="action-btn btn-disable" onclick="disableUser(${u.id})" title="Disable account">
+                                        <i class="bi bi-slash-circle-fill"></i> Disable
+                                     </button>`;
+                    } else if (u.status === 'disabled') {
+                        actions += `<button class="action-btn btn-enable" onclick="enableUser(${u.id})" title="Enable account">
+                                        <i class="bi bi-play-circle-fill"></i> Enable
+                                     </button>`;
                     }
 
+                    actions += `<button class="action-btn btn-reset" onclick="showResetPwd(${u.id},'${u.username}')" title="Reset password">
+                                    <i class="bi bi-key-fill"></i> Reset
+                                 </button>`;
+
                     return '<tr>' +
-                        `<td><strong>${u.username}</strong>${u.email ? '<br><small style="color:#64748b;">'+u.email+'</small>' : ''}</td>` +
-                        `<td>${roleSelect}</td>` +
-                        `<td>${statusBadge}</td>` +
+                        `<td>
+                            <div style="font-weight:600;color:#e2e8f0;">${u.username}</div>
+                            ${u.email ? '<div style="font-size:0.7rem;color:#64748b;margin-top:2px;">'+u.email+'</div>' : ''}
+                         </td>` +
+                        `<td><span class="${roleClass}">${roleIcon} ${u.role.toUpperCase()}</span></td>` +
+                        `<td><span class="${statusClass}">${statusIcon} ${statusLabel}</span></td>` +
                         `<td style="font-size:0.8rem;color:#64748b;">${u.created_at ? u.created_at.split(' ')[0] : '-'}</td>` +
                         `<td style="font-size:0.8rem;color:#64748b;">${u.last_login || 'Never'}</td>` +
-                        `<td class="text-nowrap">${actions}</td>` +
+                        `<td><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">${actions}</div></td>` +
                         '</tr>';
                 }).join('');
             } else {
@@ -117,7 +157,7 @@
         }
 
         async function disableUser(userId) {
-            if (!confirm('Disable this user?')) return;
+            if (!confirm('Disable this user account?')) return;
             const r = await fetch(`/api/v1/users/${userId}/disable`, {method:'POST'});
             const d = await r.json();
             if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); return; }
@@ -128,17 +168,6 @@
             const r = await fetch(`/api/v1/users/${userId}/enable`, {method:'POST'});
             const d = await r.json();
             if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); return; }
-            loadUsers();
-        }
-
-        async function changeRole(userId, newRole) {
-            const r = await fetch(`/api/v1/users/${userId}/role`, {
-                method:'PUT',
-                headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({role: newRole})
-            });
-            const d = await r.json();
-            if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); }
             loadUsers();
         }
 
