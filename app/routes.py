@@ -3,10 +3,52 @@ API and Dashboard routes for Koneksaun Saudavel.
 REST API at /api/v1/*, Dashboard at /*
 """
 
+import hashlib
+import urllib.request
 from flask import Blueprint, jsonify, request, render_template, render_template_string
 from app.auth import login_required
 from datetime import datetime, timedelta
 from app.database import get_db, query_db
+
+def update_blocklist(name: str, url: str):
+    """Download blocklist from URL, save to db/blocklists/{name}.txt. Returns (count, hash)."""
+    from pathlib import Path
+
+    if not url or not url.startswith('http'):
+        return 0, ''
+
+    blocklist_dir = Path(__file__).parent.parent / 'db' / 'blocklists'
+    blocklist_dir.mkdir(parents=True, exist_ok=True)
+    out_path = blocklist_dir / f'{name}.txt'
+
+    domains = set()
+
+    try:
+        with urllib.request.urlopen(url, timeout=60) as resp:
+            content = resp.read().decode('utf-8', errors='ignore')
+    except Exception:
+        return 0, ''
+
+    for line in content.splitlines():
+        line = line.strip()
+        if not line or line.startswith('!'):
+            continue
+        if line.startswith('0.0.0.0 ') or line.startswith('127.0.0.1 '):
+            parts = line.split()
+            if len(parts) >= 2:
+                domain = parts[-1].lower().strip()
+                if domain and not domain.startswith('#'):
+                    domains.add(domain)
+        elif '/' not in line and ' ' not in line and line and not line.startswith('#'):
+            domains.add(line.lower())
+
+    with open(out_path, 'w') as f:
+        for domain in sorted(domains):
+            f.write(domain + '\n')
+
+    content_hash = hashlib.md5(content.encode()).hexdigest()[:12]
+    return len(domains), content_hash
+
 
 api_bp = Blueprint('api', __name__)
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -76,14 +118,22 @@ def toggle_category(name):
 
 @api_bp.route('/categories/<name>/update-blocklist', methods=['POST'])
 def update_category_blocklist(name):
-    """Force update blocklist for a category."""
+    """Force update blocklist for a category. Skips 'other' (manual)."""
+    if name == 'other':
+        return jsonify({'error': 'Other category is updated manually via reports. Not available for auto-update.'}), 400
+
     db = get_db()
     category = db.execute("SELECT * FROM categories WHERE name = ?", (name,)).fetchone()
 
     if not category:
         return jsonify({'error': 'Category not found'}), 404
 
+    if not category['blocklist_url']:
+        return jsonify({'error': 'No blocklist URL configured for this category'}), 400
+
     count, hash_val = update_blocklist(name, category['blocklist_url'])
+    if count == 0:
+        return jsonify({'error': 'Failed to download blocklist. Check URL and network.'}), 500
 
     # Update blocklist metadata
     db.execute("""
