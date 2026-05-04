@@ -1,0 +1,20 @@
+[Unit]
+Description=Koneksaun Saudavel Blocked Domain Gateway
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/ks/koneksaun-saudavel
+Environment="PATH=/opt/ks/koneksaun-saudavel/venv/bin"
+ExecStart=/opt/ks/koneksaun-saudavel/venv/bin/python3 /opt/ks/koneksaun-saudavel/gateway.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ks-gateway
+
+[Install]
+WantedBy=multi-user.target

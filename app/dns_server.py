@@ -26,10 +26,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+GATEWAY_IP = '172.17.12.177'
+
 # Config
 DNS_PORT = 53
 BLOCKLIST_DIR = Path(__file__).parent.parent / "db" / "blocklists"
-PID_FILE = Path("/opt/ks/koneksaun-saudavel/dns.pid")
+PID_FILE = Path(__file__).parent.parent / "dns.pid"
 
 _blocklists = {
     'ads': set(),
@@ -168,6 +170,34 @@ def build_dns_response(query_data: bytes, nxdomain: bool = False) -> bytes:
     return response
 
 
+def build_address_answer(question_data: bytes, ip: str) -> bytes:
+    """Build an A record answer section pointing to gateway IP."""
+    domain_name, _ = parse_dns_name(question_data, 0)
+    name_parts = domain_name.split('.')
+    encoded_name = b''
+    for part in name_parts:
+        encoded_name += struct.pack("!B", len(part)) + part.encode('ascii')
+    encoded_name += struct.pack("!B", 0)
+    rdata = socket.inet_aton(ip)
+    answer = encoded_name
+    answer += struct.pack("!HHIH", 1, 1, 300, 4)
+    answer += rdata
+    return answer
+
+
+def send_blocked_response(query_data: bytes) -> bytes:
+    """Send DNS response redirecting blocked domain to blocked gateway page."""
+    txn_id = query_data[0:2]
+    flags = struct.pack('!H', 0x8180)  # Response, no error
+    question_data = query_data[12:]
+    answer_data = build_address_answer(question_data, GATEWAY_IP)
+    response = (
+        txn_id + flags + b'\x00\x01' + b'\x00\x01' + b'\x00\x00' + b'\x00\x00'
+        + question_data + answer_data
+    )
+    return response
+
+
 def send_nxdomain(query_data: bytes) -> bytes:
     """Send NXDOMAIN response for blocked domain."""
     return build_dns_response(query_data, nxdomain=True)
@@ -212,7 +242,7 @@ def handle_dns_query(query_data: bytes, client_addr: tuple) -> bytes:
             _stats['blocked'] += 1
             logger.info(f"BLOCKED [{category}] {domain} from {client_addr[0]}")
             log_query(domain, True, category, client_addr[0])
-            return send_nxdomain(query_data)
+            return send_blocked_response(query_data)
 
     log_query(domain, False, '', client_addr[0])
 
