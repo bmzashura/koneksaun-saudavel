@@ -33,7 +33,9 @@ def get_categories():
         if blocklist_path.exists():
             with open(blocklist_path, 'r') as f:
                 count = sum(1 for line in f if line.strip() and not line.startswith('#'))
-        cat['domains'] = count  # frontend expects 'domains'
+        cat['domains'] = count
+        # Remove legacy db field, frontend uses 'domains'
+        cat.pop('domain_count', None)
         result.append(cat)
     
     # Add 'other' category
@@ -43,13 +45,11 @@ def get_categories():
         with open(blocklist_path, 'r') as f:
             other_count = sum(1 for line in f if line.strip() and not line.startswith('#'))
     result.append({
-        'id': 4,
         'name': 'other',
         'display_name': 'Other',
         'description': 'Custom blocked domains',
-        'domain_count': other_count,
-        'domains': other_count,
         'enabled': 1,
+        'domains': other_count,
         'created_at': None,
         'updated_at': None,
         'blocklist_url': ''
