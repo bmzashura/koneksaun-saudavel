@@ -29,18 +29,37 @@ def update_blocklist(name: str, url: str):
     except Exception:
         return 0, ''
 
+    import re
+    # Regex to extract domain from AdGuard/AdBlock syntax: ||domain.com^ or ||domain.com/$dnsblock
+    adguard_re = re.compile(r'\|\|([a-zA-Z0-9][a-zA-Z0-9\-\.]*[a-zA-Z0-9])\^')
+    hosts_re = re.compile(r'^(?:0\.0\.0\.0|127\.0\.0\.1)\s+([^\s#]+)', re.IGNORECASE)
+
     for line in content.splitlines():
         line = line.strip()
         if not line or line.startswith('!'):
             continue
-        if line.startswith('0.0.0.0 ') or line.startswith('127.0.0.1 '):
-            parts = line.split()
-            if len(parts) >= 2:
-                domain = parts[-1].lower().strip()
-                if domain and not domain.startswith('#'):
-                    domains.add(domain)
-        elif '/' not in line and ' ' not in line and line and not line.startswith('#'):
-            domains.add(line.lower())
+
+        # AdGuard / AdBlock syntax: ||domain.com^
+        m = adguard_re.match(line)
+        if m:
+            domain = m.group(1).lower()
+            if domain:
+                domains.add(domain)
+            continue
+
+        # Hosts file format: 0.0.0.0 domain.com
+        m = hosts_re.match(line)
+        if m:
+            domain = m.group(1).lower().rstrip('.')
+            if domain and not domain.startswith('#'):
+                domains.add(domain)
+            continue
+
+        # Plain domain list (no spaces, no slashes, no AdGuard chars)
+        if '/' not in line and '||' not in line and '^' not in line and ' ' not in line and line:
+            domain = line.lower().rstrip('.')
+            if domain and not domain.startswith('#'):
+                domains.add(domain)
 
     with open(out_path, 'w') as f:
         for domain in sorted(domains):
