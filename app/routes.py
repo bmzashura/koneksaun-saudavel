@@ -22,7 +22,7 @@ def get_categories():
     db = get_db()
     
     # Get category names from DB
-    rows = db.execute("SELECT * FROM categories ORDER BY id").fetchall()
+    rows = db.execute("SELECT * FROM categories ORDER BY name").fetchall()
     result = []
     
     for row in rows:
