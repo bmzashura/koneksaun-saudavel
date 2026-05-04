@@ -50,12 +50,18 @@ def api_login():
 
     db = get_db()
     user = db.execute(
-        "SELECT id, username, password_hash, role FROM users WHERE username = ?",
+        "SELECT id, username, password_hash, role, status FROM users WHERE username = ?",
         (username,)
     ).fetchone()
 
     if not user or not verify_password(password, user['password_hash']):
         return jsonify({'error': 'Invalid credentials'}), 401
+
+    # Check account status
+    if user['status'] == 'pending':
+        return jsonify({'error': 'Account pending approval. Contact admin.'}), 403
+    if user['status'] == 'disabled':
+        return jsonify({'error': 'Account disabled. Contact admin.'}), 403
 
     # Update last login
     db.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?", (user['id'],))
@@ -78,7 +84,7 @@ def api_login():
 
 @auth_bp.route('/api/v1/auth/register', methods=['POST'])
 def api_register():
-    """API register endpoint."""
+    """API register endpoint — all new users start as pending."""
     data = request.get_json()
     username = data.get('username', '').strip()
     password = data.get('password', '')
@@ -97,32 +103,22 @@ def api_register():
     if existing:
         return jsonify({'error': 'Username already taken'}), 409
 
-    # Check if this should be the first admin
-    user_count = db.execute("SELECT COUNT(*) as cnt FROM users").fetchone()['cnt']
-    role = 'admin' if user_count == 0 else 'user'  # First user = admin
+    # All new users are 'pending' — must be approved by admin
+    role = 'user'
+    status = 'pending'
 
-    # Hash password and create user
     password_hash, _ = hash_password(password)
 
     try:
         cursor = db.execute("""
-            INSERT INTO users (username, password_hash, role, email)
-            VALUES (?, ?, ?, ?)
-        """, (username, password_hash, role, email))
+            INSERT INTO users (username, password_hash, role, email, status)
+            VALUES (?, ?, ?, ?, ?)
+        """, (username, password_hash, role, email, status))
         db.commit()
-
-        # Auto login after register
-        session['user_id'] = cursor.lastrowid
-        session['username'] = username
-        session['role'] = role
 
         return jsonify({
             'success': True,
-            'user': {
-                'id': cursor.lastrowid,
-                'username': username,
-                'role': role
-            }
+            'message': 'Registration submitted. Waiting for admin approval.'
         }), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -165,12 +161,19 @@ def login_submit():
 
     db = get_db()
     user = db.execute(
-        "SELECT id, username, password_hash, role FROM users WHERE username = ?",
+        "SELECT id, username, password_hash, role, status FROM users WHERE username = ?",
         (username,)
     ).fetchone()
 
     if not user or not verify_password(password, user['password_hash']):
         flash('Invalid credentials', 'error')
+        return redirect('/login')
+
+    if user['status'] == 'pending':
+        flash('Account pending approval. Contact admin.', 'error')
+        return redirect('/login')
+    if user['status'] == 'disabled':
+        flash('Account disabled. Contact admin.', 'error')
         return redirect('/login')
 
     db.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?", (user['id'],))
@@ -185,7 +188,7 @@ def login_submit():
 
 @auth_bp.route('/register', methods=['POST'])
 def register_submit():
-    """Handle register form submission."""
+    """Handle register form submission — new users are pending."""
     username = request.form.get('username', '').strip()
     password = request.form.get('password', '')
     email = request.form.get('email', '').strip()
@@ -205,23 +208,17 @@ def register_submit():
         flash('Username already taken', 'error')
         return redirect('/register')
 
-    user_count = db.execute("SELECT COUNT(*) as cnt FROM users").fetchone()['cnt']
-    role = 'admin' if user_count == 0 else 'user'
-
     password_hash, _ = hash_password(password)
 
     try:
-        cursor = db.execute("""
-            INSERT INTO users (username, password_hash, role, email)
-            VALUES (?, ?, ?, ?)
-        """, (username, password_hash, role, email))
+        db.execute("""
+            INSERT INTO users (username, password_hash, role, email, status)
+            VALUES (?, ?, ?, ?, 'pending')
+        """, (username, password_hash, 'user', email))
         db.commit()
 
-        session['user_id'] = cursor.lastrowid
-        session['username'] = username
-        session['role'] = role
-
-        return redirect('/dashboard')
+        flash('Registration submitted. Waiting for admin approval.', 'info')
+        return redirect('/login')
     except Exception as e:
         flash(str(e), 'error')
         return redirect('/register')
