@@ -18,19 +18,23 @@ DNS-based content blocker for Raspberry Pi / VPS. Blocks ads, porn, and gambling
 ## Architecture
 
 ```
-Client Device
-     │
-     ▼
-Python DNS Server (0.0.0.0:53) ──► Blocklist Match
-     │                              │
-     │                          NXDOMAIN    Forward to 1.1.1.1 / 8.8.8.8
-     │                          (blocked)   (allowed)
-     ▼
-[No CoreDNS needed — Python DNS binds directly to port 53]
+Client Browser
+      │
+      ▼
+Python DNS Server (0.0.0.0:53)
+      │
+      ├─── Blocklist Match ──► A record → 172.17.12.177 (redirect)
+      │                              │
+      │                          HTTP Gateway (port 80)
+      │                              │
+      │                          Blocked Page ──► Browser shows notification
+      │
+      └─── No Match ──► Forward to upstream DNS (1.1.1.1 / 8.8.8.8)
 ```
 
-- **Port 53**: Python DNS server (authoritative, handles all DNS queries)
-- **Port 8080**: Flask web app (dashboard, auth, reports, admin)
+- **Port 53 (UDP)**: Python DNS server — blocks domains, returns redirect A record for blocked sites
+- **Port 80 (TCP)**: HTTP gateway — serves blocked domain notification page
+- **Port 8080 (TCP)**: Flask web app (dashboard, auth, reports, admin)
 - **No client IP stored**: DNS query logs only store domain + category + blocked status
 
 ---
@@ -61,14 +65,15 @@ Python DNS Server (0.0.0.0:53) ──► Blocklist Match
 
 ## Services
 
-Two independent systemd services:
+Three independent systemd services:
 
 | Service | Unit File | Port | Purpose |
 |---|---|---|---|
-| DNS Server | `ks-dns.service` | 53 (UDP) | Blocks domains at DNS level |
+| DNS Server | `ks-dns.service` | 53 (UDP) | Blocks domains at DNS level, returns redirect A record |
+| HTTP Gateway | `ks-gateway.service` | 80 (TCP) | Serves blocked domain notification page |
 | Web App | `ks-web.service` | 8080 (TCP) | Dashboard, auth, admin |
 
-Both survive SSH disconnection. Both auto-start on boot. Both auto-restart on failure.
+All survive SSH disconnection. All auto-start on boot. All auto-restart on failure.
 
 ---
 
@@ -101,13 +106,29 @@ This installs both systemd services (`ks-dns` + `ks-web`), enables them, and sta
 
 ### 5. Verify
 ```bash
-# DNS blocking — must return NXDOMAIN
-dig @<server-ip> pornhub.com +short
-# Expected: (empty / NXDOMAIN)
+# DNS blocking — blocked domain returns redirect A record (not NXDOMAIN)
+dig @<server-ip> xnxx.com +short
+# Expected: 172.17.12.177
 
-# Web app — must return JSON
+# HTTP redirect — blocked domain serves notification page
+curl -s -H "Host: xnxx.com" http://<server-ip>/
+# Expected: HTML page with "Domain Terblokir" title
+
+# Non-blocked domain — returns real IP (forwarded to upstream DNS)
+dig @<server-ip> google.com +short
+# Expected: 142.250.x.x (real Google IP)
+
+# Web app
 curl http://<server-ip>:8080/health
 # Expected: {"service":"koneksaun-saudavel","status":"ok"}
+```
+
+
+### 6. Login to Dashboard
+```
+URL:      http://<server-ip>:8080/login
+Username: admin
+Password: admin123
 ```
 
 ---
@@ -116,10 +137,11 @@ curl http://<server-ip>:8080/health
 
 ```
 deploy/
-├── setup.sh          # Install both services (run once)
-├── uninstall.sh       # Remove all services
-├── ks-dns.service    # DNS server systemd unit
-└── ks-web.service    # Web app systemd unit
+├── setup.sh              # Install all 3 services (run once)
+├── uninstall.sh          # Remove all services
+├── ks-dns.service        # DNS server systemd unit
+├── ks-web.service        # Web app systemd unit
+└── ks-gateway.service    # HTTP gateway systemd unit (port 80)
 ```
 
 ### Service Management
@@ -127,14 +149,17 @@ deploy/
 # Check status
 sudo systemctl status ks-dns
 sudo systemctl status ks-web
+sudo systemctl status ks-gateway
 
 # View logs
 sudo journalctl -u ks-dns -f
 sudo journalctl -u ks-web -f
+sudo journalctl -u ks-gateway -f
 
 # Restart
 sudo systemctl restart ks-dns
 sudo systemctl restart ks-web
+sudo systemctl restart ks-gateway
 
 # Uninstall
 sudo ./deploy/uninstall.sh
