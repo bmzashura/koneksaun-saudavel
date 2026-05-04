@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domain Terblokir — Koneksaun Saudavel</title>
+    <title>Domain Blocked — Koneksaun Saudavel</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <style>
@@ -74,41 +74,41 @@
 <body>
     <div class="blocked-card">
         <div class="shield-icon"><i class="bi bi-shield-x"></i></div>
-        <h1 class="blocked-title">Domain Terblokir</h1>
+        <h1 class="blocked-title">Access Blocked</h1>
         <p class="blocked-subtitle">
-            Domain yang Anda coba akses telah diblokir melalui jaringan ini.<br>
-            Akses dibatasi untuk menjaga keamanan dan tanggung jawab internet.
+            The domain you are trying to access has been blocked on this network.<br>
+            Access is restricted to maintain network security and responsible internet use.
         </p>
         <div class="domain-box">
-            <div class="domain-label">Domain yang Diblokir</div>
+            <div class="domain-label">Blocked Domain</div>
             <div class="domain-value">{{ domain }}</div>
         </div>
         <div class="info-grid">
             <div class="info-item">
-                <div class="info-label">Kategori</div>
+                <div class="info-label">Category</div>
                 <div class="info-value">
                     <span class="badge-category badge-{{ category }}">{{ category|upper }}</span>
                 </div>
             </div>
             <div class="info-item">
-                <div class="info-label">Waktu</div>
+                <div class="info-label">Time</div>
                 <div class="info-value">{{ timestamp }}</div>
             </div>
             <div class="info-item">
                 <div class="info-label">Status</div>
-                <div class="info-value" style="color: #f87171;">DIBLOKIR</div>
+                <div class="info-value" style="color: #f87171;">BLOCKED</div>
             </div>
             <div class="info-item">
-                <div class="info-label">Dilindungi Oleh</div>
+                <div class="info-label">Protected By</div>
                 <div class="info-value">Koneksaun Saudavel</div>
             </div>
         </div>
         <a href="/" class="btn-dashboard">
-            <i class="bi bi-house me-1"></i>Kembali ke Beranda
+            <i class="bi bi-house me-1"></i>Back to Home
         </a>
         <div class="footer-note">
-            Ingin mengajukan keberatan? Hubungi administrator jaringan.<br>
-            <a href="/login">Login ke Dashboard</a> untuk detail lebih lanjut.
+            Want to appeal? Contact your network administrator.<br>
+            <a href="/login">Login to Dashboard</a> for more details.
         </div>
     </div>
 </body>
