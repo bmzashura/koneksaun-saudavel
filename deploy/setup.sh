@@ -74,19 +74,24 @@ log "Initializing database..."
 /opt/ks/koneksaun-saudavel/venv/bin/python -c "from app.database import init_db; init_db('db/koneksaun.db')"
 
 log "Creating default admin user..."
-/opt/ks/koneksaun-saudavel/venv/bin/python -c "
+/opt/ks/koneksaun-saudavel/venv/bin/python - << 'PYEOF'
 import sys
 sys.path.insert(0, '/opt/ks/koneksaun-saudavel')
 import sqlite3
 from app.auth import hash_password
+
 conn = sqlite3.connect('/opt/ks/koneksaun-saudavel/db/koneksaun.db')
 cur = conn.cursor()
-pw_hash, _ = hash_password('admin123')
-cur.execute('INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)', ('admin', pw_hash, 'admin'))
-conn.commit()
+existing = cur.execute('SELECT id FROM users WHERE username = ?', ('admin',)).fetchone()
+if existing:
+    print('admin user already exists — skipping')
+else:
+    pw_hash, _ = hash_password('admin123')
+    cur.execute('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)', ('admin', pw_hash, 'admin'))
+    conn.commit()
+    print('admin user created')
 conn.close()
-print('admin user ready')
-"
+PYEOF
 
 log "Setting ownership to ${KS_USER}..."
 chown -R "${KS_USER}:${KS_USER}" "${APP_DIR}"
