@@ -228,41 +228,70 @@ def reset_stats():
 
 @api_bp.route('/logs', methods=['GET'])
 def get_logs():
-    """Get query logs with pagination and filters."""
+    """Get query logs with pagination and filters.
+
+    Args:
+        page: page number (default 1)
+        per_page: items per page (default 100, max 500)
+        blocked: 0=allowed, 1=blocked
+        category: ads/porn/gambling/other or 'all'
+        domain: partial domain search
+        start_date: ISO date (>= timestamp)
+        end_date: ISO date (<= timestamp)
+    """
     db = get_db()
 
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 50, type=int)
-    blocked_only = request.args.get('blocked_only', 'false').lower() == 'true'
-    search = request.args.get('search', '')
+    page = max(1, request.args.get('page', 1, type=int))
+    per_page = min(500, max(10, request.args.get('per_page', 100, type=int)))
+    blocked = request.args.get('blocked', '')
+    category = request.args.get('category', '')
+    domain = request.args.get('domain', '').strip()
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
 
     offset = (page - 1) * per_page
 
-    query = "SELECT * FROM dns_logs WHERE 1=1"
-    count_query = "SELECT COUNT(*) as total FROM dns_logs WHERE 1=1"
+    where = []
     params = []
 
-    if blocked_only:
-        query += " AND blocked = 1"
-        count_query += " AND blocked = 1"
+    if blocked in ('0', '1'):
+        where.append("blocked = ?")
+        params.append(int(blocked))
 
-    if search:
-        query += " AND domain LIKE ?"
-        count_query += " AND domain LIKE ?"
-        params.append(f'%{search}%')
+    if category and category != 'all':
+        where.append("category = ?")
+        params.append(category)
 
-    query += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
-    params.extend([per_page, offset])
+    if domain:
+        where.append("domain LIKE ?")
+        params.append(f'%{domain}%')
 
-    logs = db.execute(query, params).fetchall()
-    total = db.execute(count_query, params[:(-2 if search else 0)]).fetchone()['total']
+    if start_date:
+        where.append("timestamp >= ?")
+        params.append(start_date)
+
+    if end_date:
+        where.append("timestamp <= ?")
+        params.append(end_date)
+
+    where_clause = ' AND '.join(where) if where else '1=1'
+
+    logs = db.execute(
+        f"SELECT * FROM dns_logs WHERE {where_clause} ORDER BY timestamp DESC LIMIT ? OFFSET ?",
+        params + [per_page, offset]
+    ).fetchall()
+
+    total = db.execute(
+        f"SELECT COUNT(*) as total FROM dns_logs WHERE {where_clause}",
+        params
+    ).fetchone()['total']
 
     return jsonify({
         'logs': [dict(row) for row in logs],
         'total': total,
         'page': page,
         'per_page': per_page,
-        'pages': (total + per_page - 1) // per_page
+        'pages': (total + per_page - 1) // per_page if per_page else 1
     })
 
 
