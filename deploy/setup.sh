@@ -1,7 +1,12 @@
 #!/bin/bash
 # Koneksaun Saudavel Full Setup
 # Run as: sudo ./setup.sh
-# Installs both DNS and Web services as ks-user (same user for inter-process signaling)
+# Installs DNS, Web, and Gateway services as ks-user.
+#
+# Usage on fresh VM:
+#   git clone https://github.com/bmzashura/koneksaun-saudavel.git
+#   cd koneksaun-saudavel
+#   sudo ./deploy/setup.sh
 
 set -e
 
@@ -11,7 +16,6 @@ NC='\033[0m'
 
 KS_USER="ks-user"
 APP_DIR="/opt/ks/koneksaun-saudavel"
-SRC_DIR="${HOME}/koneksaun-saudavel"
 VENV_PY="${APP_DIR}/venv/bin/python3"
 DNS_SVC="/etc/systemd/system/ks-dns.service"
 WEB_SVC="/etc/systemd/system/ks-web.service"
@@ -24,6 +28,20 @@ if [ "$EUID" -ne 0 ]; then
     error "Run as: sudo $0"
     exit 1
 fi
+
+# Detect source dir — when run via sudo as bmz user,
+# HOME=/root so we need explicit path
+if [ -d "/home/bmz/koneksaun-saudavel" ]; then
+    SRC_DIR="/home/bmz/koneksaun-saudavel"
+elif [ -d "${HOME}/koneksaun-saudavel" ]; then
+    SRC_DIR="${HOME}/koneksaun-saudavel"
+else
+    error "Source directory not found"
+    exit 1
+fi
+
+log "Source: ${SRC_DIR}"
+log "Target: ${APP_DIR}"
 
 log "Creating service user '${KS_USER}'..."
 if id "$KS_USER" &>/dev/null; then
@@ -38,12 +56,18 @@ mkdir -p /opt/ks
 rm -rf "${APP_DIR}"
 cp -r "${SRC_DIR}" "${APP_DIR}"
 
+log "Creating Python virtual environment..."
+cd "${APP_DIR}"
+python3 -m venv venv
+
+log "Installing Python dependencies..."
+/opt/ks/koneksaun-saudavel/venv/bin/pip install -q -r requirements.txt
+
+log "Initializing database..."
+/opt/ks/koneksaun-saudavel/venv/bin/python -c "from app.database import init_db; init_db('db/koneksaun.db')"
+
 log "Setting ownership to ${KS_USER}..."
 chown -R "${KS_USER}:${KS_USER}" "${APP_DIR}"
-
-log "Fixing ${APP_DIR}/dns.pid path in dns_server.py and reports.py..."
-sed -i 's|PID_FILE = Path(__file__).parent.parent / "dns.pid"|PID_FILE = Path("/opt/ks/koneksaun-saudavel/dns.pid")|' "${APP_DIR}/app/dns_server.py"
-sed -i 's|pid_file = Path(__file__).parent.parent / "dns.pid"|pid_file = Path("/opt/ks/koneksaun-saudavel/dns.pid")|' "${APP_DIR}/app/reports.py"
 
 log "Installing ks-dns.service..."
 cat > "$DNS_SVC" << EOF
@@ -115,6 +139,8 @@ SyslogIdentifier=ks-gateway
 WantedBy=multi-user.target
 EOF
 
+systemctl daemon-reload
+
 log "Enabling and starting services..."
 systemctl enable --now ks-dns
 systemctl enable --now ks-web
@@ -147,6 +173,3 @@ log "Logs:"
 log "  DNS:     sudo journalctl -u ks-dns -f"
 log "  Web:     sudo journalctl -u ks-web -f"
 log "  Gateway: sudo journalctl -u ks-gateway -f"
-log ""
-log "User ${KS_USER} created and running both services."
-log "dns.pid owned by ${KS_USER} → SIGUSR1 signaling works between DNS and Web."
