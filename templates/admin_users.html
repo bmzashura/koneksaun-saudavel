@@ -4,40 +4,166 @@
 {% block page_subtitle %}Manage registered users{% endblock %}
 {% block content %}
         <div class="content-card">
-            <div class="card-header"><i class="bi bi-people me-2"></i>Registered Users</div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-people me-2"></i>Registered Users</span>
+                <button class="btn btn-sm btn-outline-light" onclick="loadUsers()" title="Refresh">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
             <div class="card-body p-0">
                 <table class="table mb-0">
-                    <thead><tr><th>Username</th><th>Role</th><th>Created</th><th>Last Login</th><th>Actions</th></tr></thead>
-                    <tbody id="users-body"><tr><td colspan="5" class="text-center text-muted py-4">Loading...</td></tr></tbody>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-body">
+                        <tr><td colspan="6" class="text-center text-muted py-4">Loading...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
+
+        <!-- Password Reset Modal -->
+        <div class="modal fade" id="resetPwdModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content" style="background:#1e293b;color:#e2e8f0;">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title"><i class="bi bi-key me-2"></i>Reset Password</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Reset password for: <strong id="reset-pwd-user"></strong></p>
+                        <input type="hidden" id="reset-pwd-user-id">
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" id="reset-pwd-new" class="form-control" minlength="6" placeholder="Min 6 characters">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-outline-cta" onclick="doResetPassword()">Reset Password</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <script>
         async function loadUsers() {
             const r = await fetch('/api/v1/users');
             const users = await r.json();
             const tb = document.getElementById('users-body');
             if (users.length) {
-                tb.innerHTML = users.map(u =>
-                    '<tr>' +
-                    '<td><strong>'+u.username+'</strong></td>' +
-                    '<td><span class="badge badge-'+u.role+'">'+u.role+'</span></td>' +
-                    '<td style="font-size:0.8rem;color:#64748b;">'+(u.created_at||'')+'</td>' +
-                    '<td style="font-size:0.8rem;color:#64748b;">'+(u.last_login||'Never')+'</td>' +
-                    '<td><button class="btn btn-sm btn-danger" onclick="deleteUser('+u.id+',\''+u.username+'\')">Delete</button></td>' +
-                    '</tr>'
-                ).join('');
+                tb.innerHTML = users.map(u => {
+                    const statusBadge = {
+                        'pending': '<span class="badge badge-pending">PENDING</span>',
+                        'active':  '<span class="badge badge-active">ACTIVE</span>',
+                        'disabled': '<span class="badge badge-disabled">DISABLED</span>'
+                    }[u.status] || '<span class="badge">'+u.status+'</span>';
+
+                    const roleSelect = u.role === 'admin'
+                        ? '<span class="badge badge-admin">ADMIN</span>'
+                        : `<select class="form-select form-select-sm" style="width:auto;background:rgba(59,130,246,0.2);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);" onchange="changeRole(${u.id}, this.value)">
+                             <option value="user" selected>USER</option>
+                             <option value="admin">ADMIN</option>
+                           </select>`;
+
+                    let actions = statusBadge === '<span class="badge badge-active">ACTIVE</span>'
+                        ? `<button class="btn btn-sm btn-outline-warning" onclick="disableUser(${u.id})" title="Disable"><i class="bi bi-x-circle"></i></button>`
+                        : statusBadge === '<span class="badge badge-disabled">DISABLED</span>'
+                        ? `<button class="btn btn-sm btn-outline-success" onclick="enableUser(${u.id})" title="Enable"><i class="bi bi-check-circle"></i></button>`
+                        : '';
+
+                    actions += `<button class="btn btn-sm btn-outline-light" onclick="showResetPwd(${u.id},'${u.username}')" title="Reset Password"><i class="bi bi-key"></i></button>`;
+
+                    if (u.status === 'pending') {
+                        actions = `<button class="btn btn-sm btn-success" onclick="approveUser(${u.id})"><i class="bi bi-check"></i> Approve</button>
+                                   <button class="btn btn-sm btn-danger" onclick="rejectUser(${u.id},'${u.username}')"><i class="bi bi-x"></i> Reject</button>`;
+                    }
+
+                    return '<tr>' +
+                        `<td><strong>${u.username}</strong>${u.email ? '<br><small style="color:#64748b;">'+u.email+'</small>' : ''}</td>` +
+                        `<td>${roleSelect}</td>` +
+                        `<td>${statusBadge}</td>` +
+                        `<td style="font-size:0.8rem;color:#64748b;">${u.created_at ? u.created_at.split(' ')[0] : '-'}</td>` +
+                        `<td style="font-size:0.8rem;color:#64748b;">${u.last_login || 'Never'}</td>` +
+                        `<td class="text-nowrap">${actions}</td>` +
+                        '</tr>';
+                }).join('');
             } else {
-                tb.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No users</td></tr>';
+                tb.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No users</td></tr>';
             }
         }
-        async function deleteUser(userId, username) {
-            if (!confirm('Delete user ' + username + '? This cannot be undone.')) return;
-            const r = await fetch('/api/v1/users/'+userId, {method:'DELETE'});
+
+        async function approveUser(userId) {
+            if (!confirm('Approve this user?')) return;
+            const r = await fetch(`/api/v1/users/${userId}/approve`, {method:'POST'});
             const d = await r.json();
-            if (!r.ok) alert('Error: ' + (d.error||'Unknown'));
+            if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); return; }
             loadUsers();
         }
+
+        async function rejectUser(userId, username) {
+            if (!confirm('Reject and DELETE user ' + username + '? This cannot be undone.')) return;
+            const r = await fetch(`/api/v1/users/${userId}/reject`, {method:'POST'});
+            const d = await r.json();
+            if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); return; }
+            loadUsers();
+        }
+
+        async function disableUser(userId) {
+            if (!confirm('Disable this user?')) return;
+            const r = await fetch(`/api/v1/users/${userId}/disable`, {method:'POST'});
+            const d = await r.json();
+            if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); return; }
+            loadUsers();
+        }
+
+        async function enableUser(userId) {
+            const r = await fetch(`/api/v1/users/${userId}/enable`, {method:'POST'});
+            const d = await r.json();
+            if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); return; }
+            loadUsers();
+        }
+
+        async function changeRole(userId, newRole) {
+            const r = await fetch(`/api/v1/users/${userId}/role`, {
+                method:'PUT',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({role: newRole})
+            });
+            const d = await r.json();
+            if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); }
+            loadUsers();
+        }
+
+        function showResetPwd(userId, username) {
+            document.getElementById('reset-pwd-user').textContent = username;
+            document.getElementById('reset-pwd-user-id').value = userId;
+            document.getElementById('reset-pwd-new').value = '';
+            new bootstrap.Modal(document.getElementById('resetPwdModal')).show();
+        }
+
+        async function doResetPassword() {
+            const userId = document.getElementById('reset-pwd-user-id').value;
+            const newPwd = document.getElementById('reset-pwd-new').value;
+            if (!newPwd || newPwd.length < 6) { alert('Password must be at least 6 characters.'); return; }
+            const r = await fetch(`/api/v1/users/${userId}/reset-password`, {
+                method:'PUT',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({password: newPwd})
+            });
+            const d = await r.json();
+            if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); return; }
+            bootstrap.Modal.getInstance(document.getElementById('resetPwdModal')).hide();
+            loadUsers();
+        }
+
         loadUsers();
         </script>
 {% endblock %}
