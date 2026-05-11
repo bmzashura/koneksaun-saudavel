@@ -29,14 +29,16 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Detect source dir — when run via sudo as bmz user,
-# HOME=/root so we need explicit path
-if [ -d "/home/bmz/koneksaun-saudavel" ]; then
+# Detect source dir — support multiple deployment paths
+if [ -d "/home/ks-user/koneksaun-saudavel" ]; then
+    SRC_DIR="/home/ks-user/koneksaun-saudavel"
+elif [ -d "/home/bmz/koneksaun-saudavel" ]; then
     SRC_DIR="/home/bmz/koneksaun-saudavel"
 elif [ -d "${HOME}/koneksaun-saudavel" ]; then
     SRC_DIR="${HOME}/koneksaun-saudavel"
 else
     error "Source directory not found"
+    error "Clone project first: git clone https://github.com/bmzashura/koneksaun-saudavel.git"
     exit 1
 fi
 
@@ -62,6 +64,19 @@ mv "${APP_DIR}"/db/ads.txt "${APP_DIR}"/db/blocklists/ 2>/dev/null || true
 mv "${APP_DIR}"/db/porn.txt "${APP_DIR}"/db/blocklists/ 2>/dev/null || true
 mv "${APP_DIR}"/db/gambling.txt "${APP_DIR}"/db/blocklists/ 2>/dev/null || true
 mv "${APP_DIR}"/db/other.txt "${APP_DIR}"/db/blocklists/ 2>/dev/null || true
+
+log "Installing python3-venv package..."
+PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
+APT_PKG="python3-venv"
+if command -v python3.14 &>/dev/null; then
+    APT_PKG="python3.14-venv"
+elif command -v python3.13 &>/dev/null; then
+    APT_PKG="python3.13-venv"
+elif command -v python3.12 &>/dev/null; then
+    APT_PKG="python3.12-venv"
+fi
+log "Using apt package: ${APT_PKG}"
+apt-get install -y "${APT_PKG}" > /dev/null 2>&1
 
 log "Creating Python virtual environment..."
 cd "${APP_DIR}"
@@ -93,8 +108,12 @@ else:
 conn.close()
 PYEOF
 
-log "Setting ownership to ${KS_USER}..."
+log "Setting ownership and executable permission..."
 chown -R "${KS_USER}:${KS_USER}" "${APP_DIR}"
+chmod +x "${APP_DIR}/deploy/setup.sh" 2>/dev/null || true
+chmod +x "${APP_DIR}/app/dns_server.py" 2>/dev/null || true
+chmod +x "${APP_DIR}/gateway.py" 2>/dev/null || true
+chmod -R u+rw "${APP_DIR}/db" 2>/dev/null || true
 
 log "Installing ks-dns.service..."
 cat > "$DNS_SVC" << EOF
