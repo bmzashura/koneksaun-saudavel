@@ -79,6 +79,15 @@ All survive SSH disconnection. All auto-start on boot. All auto-restart on failu
 
 ## Quick Start
 
+### 0. Create Service User + Fix Permissions
+```bash
+# Create dedicated service user (if not exists)
+sudo useradd -r -s /usr/sbin/nologin ks-user 2>/dev/null || true
+
+# Make setup.sh executable
+sudo chmod +x ./deploy/setup.sh
+```
+
 ### 1. Clone
 ```bash
 git clone https://github.com/bmzashura/koneksaun-saudavel.git
@@ -102,7 +111,7 @@ pip install -r requirements.txt
 sudo ./deploy/setup.sh
 ```
 
-This installs both systemd services (`ks-dns` + `ks-web`), enables them, and starts them.
+This creates the `ks-user` account, installs both systemd services (`ks-dns` + `ks-web` + `ks-gateway`), enables them, and starts them.
 
 ### 5. Verify
 ```bash
