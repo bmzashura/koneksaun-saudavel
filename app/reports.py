@@ -2,14 +2,20 @@
 Domain Report System - User submissions + Admin approval
 """
 
-from flask import request, Blueprint, request, jsonify, render_template, redirect, session, flash
+import logging
+import os
+import signal
+import subprocess
 from datetime import datetime
 from pathlib import Path
+
+from flask import request, Blueprint, request, jsonify, render_template, redirect, session, flash
 
 from app.database import get_db
 from app.auth import login_required, admin_required, get_current_user, hash_password, verify_password
 
 reports_bp = Blueprint('reports', __name__)
+logger = logging.getLogger(__name__)
 
 
 # ==================== USER REPORT PAGES ====================
@@ -200,6 +206,36 @@ def delete_report(report_id):
     return jsonify({'success': True})
 
 
+def _reload_dns_blocklists():
+    """Send SIGUSR1 to DNS server to reload blocklists. Falls back to service restart on failure."""
+    import subprocess
+    pid_file = Path("/opt/ks/koneksaun-saudavel/dns.pid")
+    if not pid_file.exists():
+        logger.error("dns.pid not found — cannot reload blocklists")
+        return False
+    try:
+        pid = int(pid_file.read_text().strip())
+        os.kill(pid, signal.SIGUSR1)
+        logger.info(f"DNS blocklists reload triggered (PID {pid})")
+        return True
+    except Exception as e:
+        logger.warning(f"SIGUSR1 failed ({e}) — falling back to service restart")
+        try:
+            result = subprocess.run(
+                ["sudo", "systemctl", "restart", "ks-dns"],
+                capture_output=True, text=True, timeout=30
+            )
+            if result.returncode == 0:
+                logger.info("DNS server restarted successfully")
+                return True
+            else:
+                logger.error(f"DNS restart failed: {result.stderr}")
+                return False
+        except Exception as restart_err:
+            logger.error(f"DNS restart also failed: {restart_err}")
+            return False
+
+
 @reports_bp.route('/api/v1/reports/<int:report_id>/approve', methods=['POST'])
 @admin_required
 def approve_report(report_id):
@@ -238,15 +274,7 @@ def approve_report(report_id):
         
         db.commit()
 
-        # Reload DNS blocklists via SIGUSR1
-        import os, signal
-        pid_file = Path("/opt/ks/koneksaun-saudavel/dns.pid")
-        if pid_file.exists():
-            try:
-                pid = int(pid_file.read_text().strip())
-                os.kill(pid, signal.SIGUSR1)
-            except:
-                pass
+        _reload_dns_blocklists()
 
         return jsonify({
             'success': True,
@@ -487,15 +515,7 @@ def remove_from_blocklist(domain):
         
         db.commit()
         
-        # Reload DNS blocklists via SIGUSR1
-        import os
-        pid_file = Path("/opt/ks/koneksaun-saudavel/dns.pid")
-        if pid_file.exists():
-            try:
-                pid = int(pid_file.read_text().strip())
-                os.kill(pid, signal.SIGUSR1)
-            except:
-                pass
+        _reload_dns_blocklists()
         
         return jsonify({
             'success': True,
@@ -536,15 +556,9 @@ def add_to_blocklist(domain):
         """, (domain_clean, category, user['id'], notes))
         db.commit()
         
-        # Reload DNS blocklists
-        import os
-        pid_file = Path("/opt/ks/koneksaun-saudavel/dns.pid")
-        if pid_file.exists():
-            try:
-                pid = int(pid_file.read_text().strip())
-                os.kill(pid, signal.SIGUSR1)
-            except:
-                pass
+        db.commit()
+        
+        _reload_dns_blocklists()
         
         return jsonify({
             'success': True,
