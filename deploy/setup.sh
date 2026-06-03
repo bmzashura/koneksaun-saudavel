@@ -1,7 +1,7 @@
 #!/bin/bash
 # Koneksaun Saudavel Full Setup
 # Run as: sudo ./setup.sh
-# Installs DNS, Web, and Gateway services as ks-user.
+# Installs DNS and Web services as ks-user.
 #
 # Usage on fresh VM:
 #   git clone https://github.com/bmzashura/koneksaun-saudavel.git
@@ -19,7 +19,6 @@ APP_DIR="/opt/ks/koneksaun-saudavel"
 VENV_PY="${APP_DIR}/venv/bin/python3"
 DNS_SVC="/etc/systemd/system/ks-dns.service"
 WEB_SVC="/etc/systemd/system/ks-web.service"
-GATEWAY_SVC="/etc/systemd/system/ks-gateway.service"
 
 log() { echo -e "${GREEN}[INFO]${NC} $1"; }
 error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
@@ -161,42 +160,15 @@ SyslogIdentifier=ks-web
 WantedBy=multi-user.target
 EOF
 
-log "Installing ks-gateway.service (port 80)..."
-cat > "$GATEWAY_SVC" << EOF
-[Unit]
-Description=Koneksaun Saudavel Blocked Domain Gateway
-After=network.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=root
-Group=root
-WorkingDirectory=${APP_DIR}
-Environment="PATH=${APP_DIR}/venv/bin"
-ExecStart=${VENV_PY} gateway.py
-Restart=on-failure
-RestartSec=5
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=ks-gateway
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-
 log "Enabling and starting services..."
 systemctl enable --now ks-dns
 systemctl enable --now ks-web
-systemctl enable --now ks-gateway
 
 sleep 4
 
 log ""
 log "=== Status ==="
-for svc in ks-dns ks-web ks-gateway; do
+for svc in ks-dns ks-web; do
     if systemctl is-active --quiet $svc; then
         echo -e "  $svc: ${GREEN}running${NC} ✅"
     else
@@ -207,15 +179,13 @@ done
 
 log ""
 log "Ports:"
-ss -tlnp | grep -E ':53|:8080|:80' | while read line; do echo "  $line"; done
+ss -tlnp | grep -E ':53|:8080' | while read line; do echo "  $line"; done
 
 log ""
 log "Services:"
-log "  DNS:     sudo systemctl status ks-dns"
-log "  Web:     sudo systemctl status ks-web"
-log "  Gateway: sudo systemctl status ks-gateway"
+log "  DNS:  sudo systemctl status ks-dns"
+log "  Web:  sudo systemctl status ks-web"
 log ""
 log "Logs:"
-log "  DNS:     sudo journalctl -u ks-dns -f"
-log "  Web:     sudo journalctl -u ks-web -f"
-log "  Gateway: sudo journalctl -u ks-gateway -f"
+log "  DNS:  sudo journalctl -u ks-dns -f"
+log "  Web:  sudo journalctl -u ks-web -f"

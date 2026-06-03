@@ -25,7 +25,7 @@ Python DNS Server (0.0.0.0:53)
       │
       ├─── Blocklist Match ──► A record → 172.17.12.177 (redirect)
       │                              │
-      │                          HTTP Gateway (port 80)
+      │                          Flask Web App (port 8080)
       │                              │
       │                          Blocked Page ──► Browser shows notification
       │
@@ -33,9 +33,7 @@ Python DNS Server (0.0.0.0:53)
 ```
 
 - **Port 53 (UDP)**: Python DNS server — blocks domains, returns redirect A record for blocked sites
-- **Port 80 (TCP)**: HTTP gateway — serves blocked domain notification page
-- **Port 8080 (TCP)**: Flask web app (dashboard, auth, reports, admin)
-- **No client IP stored**: DNS query logs only store domain + category + blocked status
+- **Port 8080 (TCP)**: Flask web app — serves blocked domain notification page, dashboard, auth, admin
 
 ---
 
@@ -65,15 +63,14 @@ Python DNS Server (0.0.0.0:53)
 
 ## Services
 
-Three independent systemd services:
+Two independent systemd services:
 
 | Service | Unit File | Port | Purpose |
 |---|---|---|---|
 | DNS Server | `ks-dns.service` | 53 (UDP) | Blocks domains at DNS level, returns redirect A record |
-| HTTP Gateway | `ks-gateway.service` | 80 (TCP) | Serves blocked domain notification page |
-| Web App | `ks-web.service` | 8080 (TCP) | Dashboard, auth, admin |
+| Web App | `ks-web.service` | 8080 (TCP) | Dashboard, auth, admin, blocked page serving |
 
-All survive SSH disconnection. All auto-start on boot. All auto-restart on failure.
+Both survive SSH disconnection. Both auto-start on boot. Both auto-restart on failure.
 
 ---
 
@@ -111,7 +108,7 @@ pip install -r requirements.txt
 sudo ./deploy/setup.sh
 ```
 
-This creates the `ks-user` account, installs both systemd services (`ks-dns` + `ks-web` + `ks-gateway`), enables them, and starts them.
+This creates the `ks-user` account, installs both systemd services (`ks-dns` + `ks-web`), enables them, and starts them.
 
 ### 5. Verify
 ```bash
@@ -119,15 +116,15 @@ This creates the `ks-user` account, installs both systemd services (`ks-dns` + `
 dig @<server-ip> xnxx.com +short
 # Expected: 172.17.12.177
 
-# HTTP redirect — blocked domain serves notification page
-curl -s -H "Host: xnxx.com" http://<server-ip>/
+# HTTP redirect — Flask app serves blocked notification page
+curl -s -H "Host: xnxx.com" http://<server-ip>:8080/
 # Expected: HTML page with "Domain Terblokir" title
 
 # Non-blocked domain — returns real IP (forwarded to upstream DNS)
 dig @<server-ip> google.com +short
 # Expected: 142.250.x.x (real Google IP)
 
-# Web app
+# Web app health
 curl http://<server-ip>:8080/health
 # Expected: {"service":"koneksaun-saudavel","status":"ok"}
 ```
@@ -146,11 +143,10 @@ Password: admin123
 
 ```
 deploy/
-├── setup.sh              # Install all 3 services (run once)
+├── setup.sh              # Install all 2 services (run once)
 ├── uninstall.sh          # Remove all services
 ├── ks-dns.service        # DNS server systemd unit
-├── ks-web.service        # Web app systemd unit
-└── ks-gateway.service    # HTTP gateway systemd unit (port 80)
+└── ks-web.service        # Web app systemd unit
 ```
 
 ### Service Management
@@ -158,17 +154,14 @@ deploy/
 # Check status
 sudo systemctl status ks-dns
 sudo systemctl status ks-web
-sudo systemctl status ks-gateway
 
 # View logs
 sudo journalctl -u ks-dns -f
 sudo journalctl -u ks-web -f
-sudo journalctl -u ks-gateway -f
 
 # Restart
 sudo systemctl restart ks-dns
 sudo systemctl restart ks-web
-sudo systemctl restart ks-gateway
 
 # Uninstall
 sudo ./deploy/uninstall.sh
