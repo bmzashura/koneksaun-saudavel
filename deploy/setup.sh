@@ -35,6 +35,8 @@ elif [ -d "/home/bmz/koneksaun-saudavel" ]; then
     SRC_DIR="/home/bmz/koneksaun-saudavel"
 elif [ -d "${HOME}/koneksaun-saudavel" ]; then
     SRC_DIR="${HOME}/koneksaun-saudavel"
+elif [ -d "$(dirname "$(readlink -f "$0")")/.." ]; then
+    SRC_DIR="$(dirname "$(readlink -f "$0")")/.."
 else
     error "Source directory not found"
     error "Clone project first: git clone https://github.com/bmzashura/koneksaun-saudavel.git"

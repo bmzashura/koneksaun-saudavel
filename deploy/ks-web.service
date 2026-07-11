@@ -6,9 +6,9 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=%h/koneksaun-saudavel
-Environment="PATH=%h/koneksaun-saudavel/venv/bin"
-ExecStart=%h/koneksaun-saudavel/venv/bin/python3 -m flask run --host=0.0.0.0 --port=8080
+WorkingDirectory=/opt/ks/koneksaun-saudavel
+Environment="PATH=/opt/ks/koneksaun-saudavel/venv/bin"
+ExecStart=/opt/ks/koneksaun-saudavel/venv/bin/python3 -m flask run --host=0.0.0.0 --port=8080
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
@@ -17,7 +17,7 @@ SyslogIdentifier=ks-web
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=%h/koneksaun-saudavel
+ReadWritePaths=/opt/ks/koneksaun-saudavel
 PrivateTmp=true
 
 [Install]

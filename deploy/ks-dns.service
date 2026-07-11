@@ -8,9 +8,9 @@ Wants=network-online.target
 Type=simple
 User=root
 Group=root
-WorkingDirectory=%h/koneksaun-saudavel
-Environment="PATH=%h/koneksaun-saudavel/venv/bin"
-ExecStart=%h/koneksaun-saudavel/venv/bin/python3 app/dns_server.py
+WorkingDirectory=/opt/ks/koneksaun-saudavel
+Environment="PATH=/opt/ks/koneksaun-saudavel/venv/bin"
+ExecStart=/opt/ks/koneksaun-saudavel/venv/bin/python3 app/dns_server.py
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
@@ -21,7 +21,7 @@ SyslogIdentifier=ks-dns
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=%h/koneksaun-saudavel
+ReadWritePaths=/opt/ks/koneksaun-saudavel
 PrivateTmp=true
 
 [Install]
