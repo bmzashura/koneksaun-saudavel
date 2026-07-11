@@ -15,7 +15,7 @@ fi
 
 echo "[MIGRATION] Adding status column to users table..."
 
-/opt/ks/koneksaun-saudavel/venv/bin/python - << 'PYEOF'
+/opt/ks/koneksaun-saudavel/venv/bin/python3 - << 'PYEOF'
 import sqlite3, sys
 sys.path.insert(0, '/opt/ks/koneksaun-saudavel')
 

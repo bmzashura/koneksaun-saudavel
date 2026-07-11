@@ -88,6 +88,10 @@ log "Installing Python dependencies..."
 
 log "Initializing database..."
 /opt/ks/koneksaun-saudavel/venv/bin/python -c "from app.database import init_db; init_db('db/koneksaun.db')"
+        log "Running migrations..."
+        if [ -f "${APP_DIR}/db/koneksaun.db" ]; then
+            bash "${SRC_DIR}/deploy/migrate_add_status.sh" 2>/dev/null || true
+        fi
 
 log "Creating default admin user..."
 /opt/ks/koneksaun-saudavel/venv/bin/python - << 'PYEOF'
