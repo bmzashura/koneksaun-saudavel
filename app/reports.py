@@ -571,10 +571,24 @@ def remove_from_blocklist(domain):
         with open(blocklist_path, 'r') as f:
             lines = f.readlines()
         
+        def _extract_domain(line):
+            """Extract domain from a blocklist line. Returns domain str or None."""
+            stripped = line.strip()
+            if not stripped or stripped.startswith('#'):
+                return None
+            parts = stripped.split()
+            if not parts:
+                return None
+            # If line has IP prefix like "0.0.0.0 domain.com", domain is last part
+            # If line is just "domain.com", first part is the domain
+            # Use the last non-comment part
+            for part in reversed(parts):
+                if not part.startswith('#'):
+                    return part.lower()
+            return None
+
         original_count = len(lines)
-        lines = [l for l in lines if l.strip().lower() != domain_clean 
-                 and l.strip() != '0.0.0.0 ' + domain_clean
-                 and l.strip().split()[-1] != domain_clean]
+        lines = [l for l in lines if _extract_domain(l) != domain_clean]
         
         if len(lines) == original_count:
             return jsonify({'error': 'Domain not found in blocklist'}), 404
