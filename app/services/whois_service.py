@@ -1,14 +1,16 @@
 """
 WhoisService — WHOIS lookup via whoisjson.com + domain-age risk scoring.
 Includes SQLite caching (3-hour TTL) to conserve API quota.
+Stores API key encrypted (Fernet/AES if cryptography available, XOR obfuscation otherwise).
 """
 
 import os
 import json
 import logging
 import sqlite3
+import base64
+import hashlib
 from datetime import datetime, timezone, timedelta
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -17,24 +19,134 @@ WHOIS_BASE_URL = "https://whoisjson.com/api/v1/whois"
 WHOIS_TIMEOUT = 10  # seconds
 WHOIS_CACHE_TTL = int(os.getenv("WHOIS_CACHE_TTL_SECONDS", 10800))  # default 3 hours
 
-# Lazily initialised DB path
-_db_path = None
+_db_path = None  # lazily resolved at runtime
 
 
-def _get_whois_api_key():
+# ─────────────────────────────────────────────────────────────────────────────
+# Encryption helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _derive_key():
+    """
+    Derive a 32-byte key from Flask SECRET_KEY for encryption.
+    Returns None if no SECRET_KEY is available.
+    """
+    try:
+        from flask import current_app
+        secret = current_app.config.get("SECRET_KEY", "") or os.getenv("SECRET_KEY", "")
+    except Exception:
+        secret = os.getenv("SECRET_KEY", "")
+
+    if not secret:
+        logger.warning("SECRET_KEY not set — WHOIS API key protection unavailable")
+        return None
+
+    raw = hashlib.sha256((secret + "whois_key_salt").encode()).digest()
+    return base64.urlsafe_b64encode(raw)
+
+
+def _xor_obfuscate(text: str) -> str:
+    """
+    Simple XOR obfuscation. Not cryptographic — just makes the stored value
+    not human-readable. Protects against casual inspection of the DB file.
+    """
+    key = _derive_key() or b"ks_obfuscation_fallback_key_32bytes"
+    if isinstance(key, str):
+        key = key.encode()
+    result = bytearray()
+    for i, c in enumerate(text.encode()):
+        result.append(c ^ key[i % len(key)])
+    return base64.b64encode(bytes(result)).decode()
+
+
+def _xor_deobfuscate(obfuscated: str) -> str:
+    """Reverse XOR obfuscation."""
+    key = _derive_key() or b"ks_obfuscation_fallback_key_32bytes"
+    if isinstance(key, str):
+        key = key.encode()
+    data = base64.b64decode(obfuscated.encode())
+    result = bytearray()
+    for i, c in enumerate(data):
+        result.append(c ^ key[i % len(key)])
+    return result.decode()
+
+
+def _encrypt(plaintext: str) -> str:
+    """
+    Encrypt plaintext. Tries Fernet (AES-128-CBC) if cryptography is available,
+    otherwise falls back to XOR obfuscation.
+    """
+    key = _derive_key()
+    if key:
+        try:
+            from cryptography.fernet import Fernet
+            return Fernet(key).encrypt(plaintext.encode()).decode()
+        except ImportError:
+            logger.warning("cryptography not installed — WHOIS API key uses XOR obfuscation")
+    return _xor_obfuscate(plaintext)
+
+
+def _decrypt(ciphertext: str) -> str:
+    """
+    Decrypt ciphertext. Tries Fernet first, then XOR obfuscation.
+    Returns plaintext on success, ciphertext on failure.
+    """
+    key = _derive_key()
+    if key:
+        try:
+            from cryptography.fernet import Fernet
+            return Fernet(key).decrypt(ciphertext.encode()).decode()
+        except Exception:
+            pass
+    # Try XOR fallback
+    try:
+        return _xor_deobfuscate(ciphertext)
+    except Exception:
+        logger.warning("Failed to decrypt WHOIS API key — may be plaintext")
+        return ciphertext
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DB helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _get_db_path():
+    global _db_path
+    if _db_path is None:
+        try:
+            from flask import current_app
+            _db_path = current_app.config.get("DATABASE")
+        except Exception:
+            _db_path = os.getenv("DATABASE_PATH", "/opt/ks/koneksaun-saudavel/db/koneksaun.db")
+    return _db_path
+
+
+def _get_db():
+    db_path = _get_db_path()
+    conn = sqlite3.connect(db_path, timeout=10)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API key storage
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _get_whois_api_key() -> str:
     """
     Get WHOIS API key. Priority:
     1. Environment variable WHOIS_API_KEY
-    2. Decrypt from database settings table (key='whois_api_key_enc')
+    2. Decrypted from SQLite settings table (key='whois_api_key_enc')
 
-    Key is stored encrypted with Fernet (AES-128-CBC) derived from Flask SECRET_KEY.
+    The key is stored encrypted (Fernet > XOR fallback) so a DB file
+    theft does not immediately expose the key.
     """
-    # Priority 1: env var
+    # Priority 1: env var (wins if set)
     key = os.getenv("WHOIS_API_KEY", "")
     if key:
         return key
 
-    # Priority 2: encrypted in settings table
+    # Priority 2: decrypt from DB
     try:
         conn = _get_db()
         row = conn.execute(
@@ -42,69 +154,10 @@ def _get_whois_api_key():
         ).fetchone()
         conn.close()
         if row and row["value"]:
-            return _fernet_decrypt(row["value"])
+            return _decrypt(row["value"])
     except Exception as e:
         logger.warning(f"Could not read whois_api_key from settings: {e}")
     return ""
-
-
-def _fernet_key():
-    """Derive a Fernet encryption key from Flask SECRET_KEY."""
-    try:
-        from flask import current_app
-        secret = current_app.config.get("SECRET_KEY", "")
-    except Exception:
-        secret = os.getenv("SECRET_KEY", "")
-    if not secret:
-        logger.warning("SECRET_KEY not set — WHOIS API key encryption unavailable")
-        return None
-    import hashlib, base64
-    derived = hashlib.sha256((secret + "whois_key_salt").encode()).digest()
-    return base64.urlsafe_b64encode(derived)
-
-
-def _fernet_encrypt(plaintext: str) -> str:
-    """Encrypt a plaintext string. Returns base64-encoded ciphertext."""
-    key = _fernet_key()
-    if not key:
-        return plaintext  # fallback: no encryption
-    from cryptography.fernet import Fernet
-    f = Fernet(key)
-    return f.encrypt(plaintext.encode()).decode()
-
-
-def _fernet_decrypt(ciphertext: str) -> str:
-    """Decrypt a base64-encoded ciphertext. Returns plaintext."""
-    key = _fernet_key()
-    if not key:
-        return ciphertext  # fallback: assume unencrypted
-    from cryptography.fernet import Fernet
-    try:
-        return Fernet(key).decrypt(ciphertext.encode()).decode()
-    except Exception:
-        logger.warning("Failed to decrypt WHOIS API key — may be unencrypted")
-        return ciphertext
-
-
-def _get_db_path():
-    global _db_path
-    if _db_path is None:
-        # Try Flask app config first (during request context)
-        try:
-            from flask import current_app
-            _db_path = current_app.config.get("DATABASE")
-        except Exception:
-            # Fallback: use env var or default path
-            _db_path = os.getenv("DATABASE_PATH", "/opt/ks/koneksaun-saudavel/db/koneksaun.db")
-    return _db_path
-
-
-def _get_db():
-    """Get a sqlite3 connection to the app DB."""
-    db_path = _get_db_path()
-    conn = sqlite3.connect(db_path, timeout=10)
-    conn.row_factory = sqlite3.Row
-    return conn
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -186,13 +239,13 @@ def lookup_whois(domain: str) -> dict:
     """
     domain = domain.lower().strip()
 
-    # 1. Check cache
+    # 1. Cache check
     cached = _cache_get(domain)
     if cached:
         cached["cached"] = True
         return cached
 
-    # 2. No API key — return error
+    # 2. Get API key
     api_key = _get_whois_api_key()
     if not api_key:
         return {
@@ -210,7 +263,7 @@ def lookup_whois(domain: str) -> dict:
             "cached": False,
         }
 
-    # 3. Call whoisjson.com API
+    # 3. Call whoisjson.com
     import urllib.request
 
     url = f"{WHOIS_BASE_URL}?domain={domain}"
@@ -292,19 +345,19 @@ def lookup_whois(domain: str) -> dict:
         "cached": False,
     }
 
-    # 6. Store in cache (fire-and-forget)
+    # 6. Cache result (fire-and-forget)
     _cache_set(domain, result)
 
     return result
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Risk scoring
+# Risk scoring (domain age only)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def calculate_risk_score(domain_age_days):
     """
-    Calculate risk score (0-100) based purely on domain age.
+    Calculate risk score (-20 to 50) based purely on domain age.
     Higher score = more suspicious for adult/gambling content blocking.
 
     < 7 days      ->  50  (very new = very suspicious)
@@ -313,7 +366,7 @@ def calculate_risk_score(domain_age_days):
     90-365 days   ->   0  (established — neutral)
     1-5 years     -> -10  (mature)
     > 5 years     -> -20  (very established = lowest risk)
-    None          ->  10  (unknown = slight risk)
+    None           ->  10  (unknown = slight risk)
     """
     if domain_age_days is None:
         return 10

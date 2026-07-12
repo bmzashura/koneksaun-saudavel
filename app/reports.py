@@ -140,7 +140,7 @@ def update_whois_settings():
     data = request.get_json() or {}
     new_key = (data.get("api_key") or "").strip()
 
-    from app.services.whois_service import _fernet_encrypt
+    from app.services.whois_service import _encrypt as _fernet_encrypt
 
     db = get_db()
 

@@ -91,6 +91,7 @@ log "Initializing database..."
         log "Running migrations..."
         if [ -f "${APP_DIR}/db/koneksaun.db" ]; then
             bash "${SRC_DIR}/deploy/migrate_add_status.sh" 2>/dev/null || true
+            sqlite3 "${APP_DIR}/db/koneksaun.db" < "${SRC_DIR}/deploy/migrate_add_whois_cache.sql" 2>/dev/null || true
         fi
 
 log "Creating default admin user..."
