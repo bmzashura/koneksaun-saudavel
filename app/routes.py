@@ -120,6 +120,7 @@ def get_categories():
 
 
 @api_bp.route('/categories/<name>/toggle', methods=['POST'])
+@login_required
 def toggle_category(name):
     """Enable or disable a blocking category."""
     db = get_db()
@@ -136,6 +137,7 @@ def toggle_category(name):
 
 
 @api_bp.route('/categories/<name>/update-blocklist', methods=['POST'])
+@login_required
 def update_category_blocklist(name):
     """Force update blocklist for a category. Skips 'other' (manual)."""
     if name == 'other':
@@ -237,6 +239,7 @@ def get_stats():
 
 
 @api_bp.route('/stats/reset', methods=['POST'])
+@login_required
 def reset_stats():
     """Reset statistics counters."""
     # stats reset not implemented (in-memory stats removed)
@@ -315,6 +318,7 @@ def get_logs():
 
 
 @api_bp.route('/logs/clear', methods=['POST'])
+@login_required
 def clear_logs():
     """Clear all query logs."""
     db = get_db()
