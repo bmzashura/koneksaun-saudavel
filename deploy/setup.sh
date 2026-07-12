@@ -77,7 +77,7 @@ elif command -v python3.12 &>/dev/null; then
     APT_PKG="python3.12-venv"
 fi
 log "Using apt package: ${APT_PKG}"
-apt-get install -y "${APT_PKG}" > /dev/null 2>&1
+apt-get install -y "${APT_PKG}" sqlite3 > /dev/null 2>&1
 
 log "Creating Python virtual environment..."
 cd "${APP_DIR}"
