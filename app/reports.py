@@ -104,7 +104,7 @@ def admin_users_page():
 # ==================== REPORT API ====================
 
 @reports_bp.route('/api/v1/reports', methods=['GET'])
-@login_required
+@admin_required
 def list_reports():
     """List all reports (admin)."""
     db = get_db()
