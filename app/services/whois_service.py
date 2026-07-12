@@ -25,23 +25,65 @@ def _get_whois_api_key():
     """
     Get WHOIS API key. Priority:
     1. Environment variable WHOIS_API_KEY
-    2. Database settings table (key='whois_api_key')
+    2. Decrypt from database settings table (key='whois_api_key_enc')
+
+    Key is stored encrypted with Fernet (AES-128-CBC) derived from Flask SECRET_KEY.
     """
+    # Priority 1: env var
     key = os.getenv("WHOIS_API_KEY", "")
     if key:
         return key
-    # Fallback: read from settings table
+
+    # Priority 2: encrypted in settings table
     try:
         conn = _get_db()
         row = conn.execute(
-            "SELECT value FROM settings WHERE key = ?", ("whois_api_key",)
+            "SELECT value FROM settings WHERE key = ?", ("whois_api_key_enc",)
         ).fetchone()
         conn.close()
         if row and row["value"]:
-            return row["value"]
+            return _fernet_decrypt(row["value"])
     except Exception as e:
         logger.warning(f"Could not read whois_api_key from settings: {e}")
     return ""
+
+
+def _fernet_key():
+    """Derive a Fernet encryption key from Flask SECRET_KEY."""
+    try:
+        from flask import current_app
+        secret = current_app.config.get("SECRET_KEY", "")
+    except Exception:
+        secret = os.getenv("SECRET_KEY", "")
+    if not secret:
+        logger.warning("SECRET_KEY not set — WHOIS API key encryption unavailable")
+        return None
+    import hashlib, base64
+    derived = hashlib.sha256((secret + "whois_key_salt").encode()).digest()
+    return base64.urlsafe_b64encode(derived)
+
+
+def _fernet_encrypt(plaintext: str) -> str:
+    """Encrypt a plaintext string. Returns base64-encoded ciphertext."""
+    key = _fernet_key()
+    if not key:
+        return plaintext  # fallback: no encryption
+    from cryptography.fernet import Fernet
+    f = Fernet(key)
+    return f.encrypt(plaintext.encode()).decode()
+
+
+def _fernet_decrypt(ciphertext: str) -> str:
+    """Decrypt a base64-encoded ciphertext. Returns plaintext."""
+    key = _fernet_key()
+    if not key:
+        return ciphertext  # fallback: assume unencrypted
+    from cryptography.fernet import Fernet
+    try:
+        return Fernet(key).decrypt(ciphertext.encode()).decode()
+    except Exception:
+        logger.warning("Failed to decrypt WHOIS API key — may be unencrypted")
+        return ciphertext
 
 
 def _get_db_path():

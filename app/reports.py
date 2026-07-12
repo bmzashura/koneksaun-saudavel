@@ -140,12 +140,15 @@ def update_whois_settings():
     data = request.get_json() or {}
     new_key = (data.get("api_key") or "").strip()
 
+    from app.services.whois_service import _fernet_encrypt
+
     db = get_db()
 
     if new_key:
+        encrypted = _fernet_encrypt(new_key)
         db.execute(
             "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
-            ("whois_api_key", new_key),
+            ("whois_api_key_enc", encrypted),
         )
         db.commit()
         # Clear stale cache so new key is used immediately
