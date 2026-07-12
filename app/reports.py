@@ -101,6 +101,28 @@ def admin_users_page():
                          user=user)
 
 
+# ==================== WHOIS API ====================
+
+@reports_bp.route('/api/v1/whois/<domain>', methods=['GET'])
+def whois_lookup(domain):
+    """
+    WHOIS lookup for a domain. Returns registration data + domain-age risk score.
+
+    Risk score is based purely on domain age:
+      < 7 days   -> 50 (very new = very suspicious)
+      7-30 days  -> 35 (fresh = suspicious)
+      30-90 days -> 15 (new-ish)
+      90-365 days-> 0  (established)
+      1-5 years  -> -10 (mature)
+      > 5 years  -> -20 (very established)
+    """
+    from app.services.whois_service import lookup_whois, calculate_risk_score, risk_level_label
+    result = lookup_whois(domain)
+    if not result["success"]:
+        return jsonify(result), 502
+    return jsonify(result)
+
+
 # ==================== REPORT API ====================
 
 @reports_bp.route('/api/v1/reports', methods=['GET'])

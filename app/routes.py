@@ -6,7 +6,7 @@ REST API at /api/v1/*, Dashboard at /*
 import hashlib
 import urllib.request
 from flask import Blueprint, jsonify, request, render_template, render_template_string
-from app.auth import login_required
+from app.auth import login_required, admin_required
 from datetime import datetime, timedelta
 from app.database import get_db, query_db
 

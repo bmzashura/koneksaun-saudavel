@@ -8,6 +8,7 @@ Wants=network-online.target
 Type=simple
 WorkingDirectory=/opt/ks/koneksaun-saudavel
 Environment="PATH=/opt/ks/koneksaun-saudavel/venv/bin"
+Environment="WHOIS_API_KEY=YOUR_WHOISJSON_API_KEY"
 ExecStart=/opt/ks/koneksaun-saudavel/venv/bin/python3 -m flask run --host=0.0.0.0 --port=8080
 Restart=on-failure
 RestartSec=5
