@@ -101,6 +101,63 @@ def admin_users_page():
                          user=user)
 
 
+# ==================== ADMIN SETTINGS API ====================
+
+@reports_bp.route('/api/v1/admin/settings/whois', methods=['GET'])
+@admin_required
+def get_whois_settings():
+    """
+    Get WHOIS configuration.
+    Returns: {api_key_configured: bool, api_key_preview: str, cache_ttl_hours: int}
+    """
+    import os
+    from app.services.whois_service import _get_whois_api_key
+
+    api_key = _get_whois_api_key()
+    configured = bool(api_key)
+    # Preview: show first 8 chars + *** + last 4 if set
+    if configured and len(api_key) > 12:
+        preview = f"{api_key[:8]}...{api_key[-4:]}"
+    elif configured:
+        preview = "***" + api_key[-4:] if len(api_key) >= 4 else "****"
+    else:
+        preview = None
+
+    return jsonify({
+        "api_key_configured": configured,
+        "api_key_preview": preview,
+        "cache_ttl_hours": int(os.getenv("WHOIS_CACHE_TTL_SECONDS", "10800")) // 3600,
+    })
+
+
+@reports_bp.route('/api/v1/admin/settings/whois', methods=['PUT'])
+@admin_required
+def update_whois_settings():
+    """
+    Update WHOIS API key in settings table.
+    Body: {"api_key": "..."}  — set to null/empty to clear
+    """
+    data = request.get_json() or {}
+    new_key = (data.get("api_key") or "").strip()
+
+    db = get_db()
+
+    if new_key:
+        db.execute(
+            "INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)",
+            ("whois_api_key", new_key),
+        )
+        db.commit()
+        # Clear stale cache so new key is used immediately
+        db.execute("DELETE FROM whois_cache")
+        db.commit()
+        return jsonify({"success": True, "api_key_configured": True})
+    else:
+        db.execute("DELETE FROM settings WHERE key = ?", ("whois_api_key",))
+        db.commit()
+        return jsonify({"success": True, "api_key_configured": False})
+
+
 # ==================== WHOIS API ====================
 
 @reports_bp.route('/api/v1/whois/<domain>', methods=['GET'])

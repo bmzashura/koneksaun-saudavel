@@ -23,6 +23,34 @@
             </div>
         </div>
 
+        <!-- WHOIS Configuration -->
+        <div class="content-card mb-4">
+            <div class="card-header"><i class="bi bi-shield-lock me-2"></i>WHOIS API (whoisjson.com)</div>
+            <div class="card-body">
+                <p class="text-muted mb-3" style="font-size:0.875rem;">
+                    Used for domain age &amp; risk scoring during report review.
+                    Results are cached for 3 hours. Get your free API key at
+                    <a href="https://whoisjson.com" target="_blank">whoisjson.com</a>
+                    (1,000 requests/month free).
+                </p>
+                <div class="mb-2">
+                    <label class="form-label" style="font-size:0.85rem;">API Key</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="password" id="whois-api-key" class="form-control form-control-sm"
+                               placeholder="Paste WHOISJSON API key here" style="max-width:420px;" />
+                        <span id="whois-key-status" class="badge badge-disabled" style="font-size:0.75rem;">Not configured</span>
+                    </div>
+                    <div class="form-text" style="font-size:0.75rem;">
+                        Current key: <span id="whois-key-preview">-</span>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-ks" onclick="saveWhoisKey()">
+                    <i class="bi bi-save me-1"></i>Save
+                </button>
+                <div id="whois-msg" class="mt-2" style="font-size:0.85rem;"></div>
+            </div>
+        </div>
+
         <!-- Service Info -->
         <div class="content-card">
             <div class="card-header"><i class="bi bi-info-circle me-2"></i>Service Information</div>
@@ -81,5 +109,56 @@
 
         document.getElementById('server-time').textContent = new Date().toLocaleString();
         loadCategories();
+        loadWhoisSettings();
+
+        async function loadWhoisSettings() {
+            try {
+                const r = await fetch('/api/v1/admin/settings/whois');
+                if (!r.ok) return;
+                const d = await r.json();
+                document.getElementById('whois-key-preview').textContent =
+                    d.api_key_configured ? d.api_key_preview : 'Not set';
+                const status = document.getElementById('whois-key-status');
+                if (d.api_key_configured) {
+                    status.textContent = 'Configured';
+                    status.className = 'badge badge-active';
+                } else {
+                    status.textContent = 'Not configured';
+                    status.className = 'badge badge-disabled';
+                }
+            } catch(e) { console.error('WHOIS settings load error:', e); }
+        }
+
+        async function saveWhoisKey() {
+            const key = document.getElementById('whois-api-key').value.trim();
+            const msg = document.getElementById('whois-msg');
+            msg.textContent = 'Saving...';
+            msg.style.color = '#888';
+            try {
+                const r = await fetch('/api/v1/admin/settings/whois', {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({api_key: key})
+                });
+                const d = await r.json();
+                if (d.success) {
+                    document.getElementById('whois-api-key').value = '';
+                    document.getElementById('whois-key-preview').textContent =
+                        d.api_key_configured ? '(saved — key active)' : 'Not set';
+                    const status = document.getElementById('whois-key-status');
+                    status.textContent = d.api_key_configured ? 'Configured' : 'Not configured';
+                    status.className = d.api_key_configured ? 'badge badge-active' : 'badge badge-disabled';
+                    msg.textContent = 'Saved! WHOIS lookup is now active.';
+                    msg.style.color = '#2ea857';
+                } else {
+                    msg.textContent = 'Error saving.';
+                    msg.style.color = '#d93b3b';
+                }
+            } catch(e) {
+                msg.textContent = 'Request failed: ' + e;
+                msg.style.color = '#d93b3b';
+            }
+            setTimeout(() => { msg.textContent = ''; }, 4000);
+        }
         </script>
 {% endblock %}

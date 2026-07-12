@@ -21,6 +21,29 @@ WHOIS_CACHE_TTL = int(os.getenv("WHOIS_CACHE_TTL_SECONDS", 10800))  # default 3 
 _db_path = None
 
 
+def _get_whois_api_key():
+    """
+    Get WHOIS API key. Priority:
+    1. Environment variable WHOIS_API_KEY
+    2. Database settings table (key='whois_api_key')
+    """
+    key = os.getenv("WHOIS_API_KEY", "")
+    if key:
+        return key
+    # Fallback: read from settings table
+    try:
+        conn = _get_db()
+        row = conn.execute(
+            "SELECT value FROM settings WHERE key = ?", ("whois_api_key",)
+        ).fetchone()
+        conn.close()
+        if row and row["value"]:
+            return row["value"]
+    except Exception as e:
+        logger.warning(f"Could not read whois_api_key from settings: {e}")
+    return ""
+
+
 def _get_db_path():
     global _db_path
     if _db_path is None:
@@ -128,11 +151,12 @@ def lookup_whois(domain: str) -> dict:
         return cached
 
     # 2. No API key — return error
-    if not WHOIS_API_KEY:
+    api_key = _get_whois_api_key()
+    if not api_key:
         return {
             "success": False,
             "domain": domain,
-            "error": "WHOIS_API_KEY not configured",
+            "error": "WHOIS_API_KEY not configured (set via admin dashboard or WHOIS_API_KEY env var)",
             "risk_score": None,
             "risk_level": None,
             "created_date": None,
@@ -152,7 +176,7 @@ def lookup_whois(domain: str) -> dict:
         req = urllib.request.Request(
             url,
             headers={
-                "Authorization": f"TOKEN={WHOIS_API_KEY}",
+                "Authorization": f"TOKEN={api_key}",
                 "Accept": "application/json",
                 "User-Agent": "KoneksaunSaudavel/1.0",
             },
