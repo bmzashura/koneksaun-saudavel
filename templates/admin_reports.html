@@ -57,7 +57,20 @@
 <div id="msg-box" style="padding:0.5rem;font-size:0.85rem;"></div>
 
 <script>
+function isValidDomain(domain) {
+    if (!domain || typeof domain !== 'string') return false;
+    // Basic format: no spaces, no empty, has at least one dot, reasonable length
+    const d = domain.trim().toLowerCase();
+    if (!d || d.includes(' ') || d.length < 4 || d.length > 253) return false;
+    // Rough domain pattern
+    return /^[a-z0-9][a-z0-9.-]{0,251}[a-z0-9]$/.test(d);
+}
+
 async function loadWhois(domain) {
+    if (!isValidDomain(domain)) {
+        alert('Invalid domain: ' + JSON.stringify(domain));
+        return;
+    }
     const panel = document.getElementById('whois-panel');
     const body = document.getElementById('whois-body');
     document.getElementById('whois-domain').textContent = domain;
