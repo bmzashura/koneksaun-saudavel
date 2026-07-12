@@ -72,3 +72,13 @@ CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
 CREATE INDEX IF NOT EXISTS idx_reports_reporter ON reports(reporter_id);
 CREATE INDEX IF NOT EXISTS idx_dns_logs_blocked ON dns_logs(blocked);
 CREATE INDEX IF NOT EXISTS idx_dns_logs_category ON dns_logs(category);
+
+-- WHOIS lookup cache (TTL 3 hours)
+CREATE TABLE IF NOT EXISTS whois_cache (
+    domain TEXT PRIMARY KEY,
+    response_json TEXT NOT NULL,
+    cached_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_whois_cache_expires ON whois_cache(expires_at);
