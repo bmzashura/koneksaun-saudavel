@@ -76,12 +76,11 @@
                         <th>Waktu</th>
                         <th>Domain</th>
                         <th>Kategori</th>
-                        <th>IP Klien</th>
                         <th>Status</th>
                     </tr>
                 </thead>
                 <tbody id="logs-body">
-                    <tr><td colspan="5" class="text-center text-muted py-4">Memuat...</td></tr>
+                    <tr><td colspan="4" class="text-center text-muted py-4">Memuat...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -124,7 +123,7 @@ async function loadLogs(page) {
     currentPage = page;
 
     const tb = document.getElementById('logs-body');
-    tb.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Memuat...</td></tr>';
+    tb.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Memuat...</td></tr>';
 
     try {
         const r = await fetch(buildUrl(page), { credentials: 'include' });
@@ -140,7 +139,7 @@ async function loadLogs(page) {
             '<i class="bi bi-arrow-clockwise me-1"></i>' + new Date().toLocaleTimeString();
 
         if (!currentLogs.length) {
-            tb.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Tidak ada log ditemukan</td></tr>';
+            tb.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Tidak ada log ditemukan</td></tr>';
         } else {
             tb.innerHTML = currentLogs.map(l => {
                 const catBadge = l.category
@@ -153,7 +152,6 @@ async function loadLogs(page) {
                     '<td style="font-size:0.78rem;color:var(--text-muted);">'+l.timestamp+'</td>' +
                     '<td><code style="font-size:0.82rem;word-break:break-all;">'+l.domain+'</code></td>' +
                     '<td>'+catBadge+'</td>' +
-                    '<td style="font-size:0.78rem;color:var(--text-muted);">'+(l.client_ip||'-')+'</td>' +
                     '<td>'+statusBadge+'</td>' +
                 '</tr>';
             }).join('');
@@ -161,7 +159,7 @@ async function loadLogs(page) {
 
         renderPagination(d.page, d.pages, d.total);
     } catch (e) {
-        tb.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-3">Error memuat log</td></tr>';
+        tb.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3">Error memuat log</td></tr>';
     }
 }
 
@@ -208,12 +206,11 @@ function clearFilters() {
 
 function exportCSV() {
     if (!currentLogs.length) { alert('Tidak ada log untuk diexport.'); return; }
-    const header = ['Timestamp', 'Domain', 'Kategori', 'IP Klien', 'Status'];
+    const header = ['Timestamp', 'Domain', 'Kategori', 'Status'];
     const rows = currentLogs.map(l => [
         l.timestamp || '',
         l.domain || '',
         l.category || '',
-        l.client_ip || '',
         l.blocked ? 'TERBLOKIR' : 'DIIZINKAN'
     ]);
     const csv = [header, ...rows].map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"')).join('\n');

@@ -18,7 +18,7 @@ guest = {
     "blocking_categories": "Kategori Pemblokiran",
     "local_no_cloud": "100% Lokal — Tanpa Cloud",
     "no_client_ips": "0",
-    "client_ips_logged": "IP Klien Terlog",
+    "client_ips_logged": "IP Klien Tidak Terlog",
     "protection_features": "Fitur Perlindungan",
     "block_ads": "Blokir Iklan & Pelacak",
     "block_ads_desc": "Hilangkan iklan dan pelacak di semua perangkat yang terhubung ke jaringan. Browsing lebih cepat dan privat.",

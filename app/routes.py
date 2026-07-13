@@ -316,7 +316,7 @@ def get_logs():
     where_clause = ' AND '.join(where) if where else '1=1'
 
     logs = db.execute(
-        f"SELECT * FROM dns_logs WHERE {where_clause} ORDER BY timestamp DESC LIMIT ? OFFSET ?",
+        f"SELECT id, domain, blocked, category, timestamp FROM dns_logs WHERE {where_clause} ORDER BY timestamp DESC LIMIT ? OFFSET ?",
         params + [per_page, offset]
     ).fetchall()
 
