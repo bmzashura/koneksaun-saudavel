@@ -11,17 +11,21 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from app.database import get_db, query_db
 
-def utc_to_dili(ts_str):
-    """Convert UTC timestamp string to Asia/Dili timezone for display."""
-    if not ts_str:
+def utc_to_dili(ts_val):
+    """Convert UTC timestamp (string or datetime) to Asia/Dili timezone for display."""
+    if not ts_val:
         return ''
     try:
-        # SQLite stores naive datetime strings: "2026-07-13 08:30:47"
-        utc_dt = datetime.strptime(ts_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=ZoneInfo('UTC'))
+        from datetime import datetime as dt
+        # Handle both string and datetime object inputs
+        if isinstance(ts_val, dt):
+            utc_dt = ts_val.replace(tzinfo=ZoneInfo('UTC')) if ts_val.tzinfo is None else ts_val.astimezone(ZoneInfo('UTC'))
+        else:
+            utc_dt = dt.strptime(str(ts_val), '%Y-%m-%d %H:%M:%S').replace(tzinfo=ZoneInfo('UTC'))
         dili_dt = utc_dt.astimezone(ZoneInfo('Asia/Dili'))
         return dili_dt.strftime('%a, %d %b %Y %H:%M:%S %Z')
     except Exception:
-        return ts_str
+        return str(ts_val)
 
 
 def update_blocklist(name: str, url: str):
