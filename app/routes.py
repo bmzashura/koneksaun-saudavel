@@ -16,7 +16,8 @@ def utc_to_dili(ts_str):
     if not ts_str:
         return ''
     try:
-        utc_dt = datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
+        # SQLite stores naive datetime strings: "2026-07-13 08:30:47"
+        utc_dt = datetime.strptime(ts_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=ZoneInfo('UTC'))
         dili_dt = utc_dt.astimezone(ZoneInfo('Asia/Dili'))
         return dili_dt.strftime('%a, %d %b %Y %H:%M:%S %Z')
     except Exception:
