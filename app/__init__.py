@@ -34,7 +34,17 @@ def create_app():
     app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
     app.config['TEMPLATES_AUTO_RELOAD'] = True
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-    app.config['SESSION_COOKIE_SECURE'] = False
+    app.config['SESSION_COOKIE_SECURE'] = False  # Set True if served behind HTTPS proxy (Cloudflare)
+
+    # Security headers — applied to all responses
+    @app.after_request
+    def security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+        return response
 
     # Initialize database
     init_db(app.config['DATABASE'])
