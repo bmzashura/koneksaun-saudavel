@@ -135,6 +135,20 @@
         .navbar-nav .nav-link-custom { padding: 0.5rem 1rem; }
         /* Mobile nav: theme toggle always visible outside hamburger */
         .mobile-controls { display: flex; align-items: center; gap: 0.5rem; }
+        /* Desktop login button — solid blue, always visible */
+        .btn-desktop-login {
+            background: #1e40af;
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 0.4rem 1.25rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-block;
+        }
+        .btn-desktop-login:hover { background: #1e3a8a; color: #fff; transform: translateY(-1px); }
         @media (max-width: 991.98px) {
             .navbar-collapse { background: rgba(15,23,42,0.98); border-radius: 12px; padding: 1rem; margin-top: 0.5rem; border: 1px solid rgba(255,255,255,0.08); }
             [data-bs-theme="light"] .navbar-collapse { background: rgba(255,255,255,0.98); border: 1px solid rgba(0,0,0,0.1); }
@@ -195,13 +209,9 @@
                             <i class="bi bi-moon-fill" id="theme-icon"></i>
                         </button>
                     </li>
-                    <!-- Mobile: login in hamburger -->
-                    <li class="nav-item d-lg-none" id="nav-login-mobile">
-                        <a class="btn btn-masuk" href="/login">Masuk</a>
-                    </li>
-                    <!-- Desktop login (always visible) -->
+                    <!-- Desktop login button (solid blue, visible on both themes) -->
                     <li class="nav-item d-none d-lg-block" id="nav-login">
-                        <a class="btn btn-outline-cta btn-sm" href="/login">Masuk</a>
+                        <a class="btn btn-desktop-login" href="/login">Masuk</a>
                     </li>
                     <li class="nav-item d-none d-lg-block" id="nav-dashboard" style="display:none;">
                         <a class="nav-link-custom" href="/dashboard">Dashboard</a>
@@ -211,6 +221,14 @@
                         <a class="nav-link-custom" href="#" onclick="document.getElementById('logout-form-home').submit(); return false;" style="color:#f56565;">
                             Keluar
                         </a>
+                    </li>
+                    <!-- Mobile: login in hamburger -->
+                    <li class="nav-item d-lg-none" id="nav-login-mobile">
+                        <a class="btn btn-masuk" href="/login">Masuk</a>
+                    </li>
+                    <!-- Mobile: dashboard (inside hamburger) -->
+                    <li class="nav-item d-lg-none" id="nav-dashboard-mobile" style="display:none;">
+                        <a class="nav-link-custom" href="/dashboard">Dashboard</a>
                     </li>
                     <!-- Mobile logout -->
                     <li class="nav-item d-lg-none" id="nav-logout-mobile" style="display:none;">
@@ -563,6 +581,13 @@
                     document.getElementById('nav-dashboard-mobile').style.display = '';
                     document.getElementById('nav-logout').style.display = '';
                     document.getElementById('nav-logout-mobile').style.display = '';
+                } else {
+                    document.getElementById('nav-login').style.display = '';
+                    document.getElementById('nav-login-mobile').style.display = '';
+                    document.getElementById('nav-dashboard').style.display = 'none';
+                    document.getElementById('nav-dashboard-mobile').style.display = 'none';
+                    document.getElementById('nav-logout').style.display = 'none';
+                    document.getElementById('nav-logout-mobile').style.display = 'none';
                 }
             })
             .catch(() => {});
