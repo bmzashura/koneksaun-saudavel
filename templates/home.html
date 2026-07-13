@@ -135,6 +135,8 @@
         .navbar-nav .nav-link-custom { padding: 0.5rem 1rem; }
         /* Mobile nav: theme toggle always visible outside hamburger */
         .mobile-controls { display: flex; align-items: center; gap: 0.5rem; }
+        /* Force-hide — cannot be overridden by Bootstrap */
+        .force-hide { display: none !important; }
         /* Desktop login button — solid blue, always visible */
         .btn-desktop-login {
             background: #1e40af;
@@ -213,11 +215,11 @@
                     <li class="nav-item d-none d-lg-block" id="nav-login">
                         <a class="btn btn-desktop-login" href="/login">Masuk</a>
                     </li>
-                    <li class="nav-item d-none d-lg-block" id="nav-dashboard" style="display:none;">
+                    <li class="nav-item d-none d-lg-block force-hide" id="nav-dashboard">
                         <a class="nav-link-custom" href="/dashboard">Dashboard</a>
                     </li>
-                    <li class="nav-item d-none d-lg-block" id="nav-logout" style="display:none;">
-                        <form id="logout-form-home" method="POST" action="/logout" style="display:none;"></form>
+                    <li class="nav-item d-none d-lg-block force-hide" id="nav-logout">
+                        <form id="logout-form-home" method="POST" action="/logout"></form>
                         <a class="nav-link-custom" href="#" onclick="document.getElementById('logout-form-home').submit(); return false;" style="color:#f56565;">
                             Keluar
                         </a>
@@ -227,12 +229,12 @@
                         <a class="btn btn-masuk" href="/login">Masuk</a>
                     </li>
                     <!-- Mobile: dashboard (inside hamburger) -->
-                    <li class="nav-item d-lg-none" id="nav-dashboard-mobile" style="display:none;">
+                    <li class="nav-item d-lg-none force-hide" id="nav-dashboard-mobile">
                         <a class="nav-link-custom" href="/dashboard">Dashboard</a>
                     </li>
                     <!-- Mobile logout -->
-                    <li class="nav-item d-lg-none" id="nav-logout-mobile" style="display:none;">
-                        <form id="logout-form-home-mobile" method="POST" action="/logout" style="display:none;"></form>
+                    <li class="nav-item d-lg-none force-hide" id="nav-logout-mobile">
+                        <form id="logout-form-home-mobile" method="POST" action="/logout"></form>
                         <a class="nav-link-custom" href="#" onclick="document.getElementById('logout-form-home-mobile').submit(); return false;" style="color:#f56565;">
                             Keluar
                         </a>
@@ -575,19 +577,19 @@
             .then(r => r.json())
             .then(data => {
                 if (data.authenticated) {
-                    document.getElementById('nav-login').style.display = 'none';
-                    document.getElementById('nav-login-mobile').style.display = 'none';
-                    document.getElementById('nav-dashboard').style.display = '';
-                    document.getElementById('nav-dashboard-mobile').style.display = '';
-                    document.getElementById('nav-logout').style.display = '';
-                    document.getElementById('nav-logout-mobile').style.display = '';
+                    document.getElementById('nav-login').classList.add('force-hide');
+                    document.getElementById('nav-login-mobile').classList.add('force-hide');
+                    document.getElementById('nav-dashboard').classList.remove('force-hide');
+                    document.getElementById('nav-dashboard-mobile').classList.remove('force-hide');
+                    document.getElementById('nav-logout').classList.remove('force-hide');
+                    document.getElementById('nav-logout-mobile').classList.remove('force-hide');
                 } else {
-                    document.getElementById('nav-login').style.display = '';
-                    document.getElementById('nav-login-mobile').style.display = '';
-                    document.getElementById('nav-dashboard').style.display = 'none';
-                    document.getElementById('nav-dashboard-mobile').style.display = 'none';
-                    document.getElementById('nav-logout').style.display = 'none';
-                    document.getElementById('nav-logout-mobile').style.display = 'none';
+                    document.getElementById('nav-login').classList.remove('force-hide');
+                    document.getElementById('nav-login-mobile').classList.remove('force-hide');
+                    document.getElementById('nav-dashboard').classList.add('force-hide');
+                    document.getElementById('nav-dashboard-mobile').classList.add('force-hide');
+                    document.getElementById('nav-logout').classList.add('force-hide');
+                    document.getElementById('nav-logout-mobile').classList.add('force-hide');
                 }
             })
             .catch(() => {});
