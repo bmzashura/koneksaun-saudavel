@@ -116,20 +116,46 @@
         .step-content h5 { color: var(--text-main); font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
         .step-content p { color: var(--text-muted); font-size: 0.875rem; margin: 0; }
         .theme-toggle-nav {
-            background: transparent; border: 1px solid var(--card-border);
-            color: var(--text-muted); border-radius: 8px; padding: 0.4rem 0.6rem;
-            cursor: pointer; font-size: 1rem; transition: all 0.2s;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #94a3b8;
+            border-radius: 8px;
+            padding: 0.4rem 0.6rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
         }
-        .theme-toggle-nav:hover { color: var(--text-main); border-color: var(--accent); }
+        .theme-toggle-nav:hover { color: #fff; border-color: #3b82f6; }
+        [data-bs-theme="light"] .theme-toggle-nav { border-color: rgba(0,0,0,0.15); color: #64748b; }
+        [data-bs-theme="light"] .theme-toggle-nav:hover { color: #1a202c; }
         .navbar-toggler { color: var(--text-muted); }
         .navbar-toggler:focus { box-shadow: none; }
         .navbar-toggler-icon { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(148,163,184,1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e"); }
         [data-bs-theme="light"] .navbar-toggler-icon { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(100,116,139,1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e"); }
         .navbar-nav .nav-link-custom { padding: 0.5rem 1rem; }
+        /* Mobile nav: theme toggle always visible outside hamburger */
+        .mobile-controls { display: flex; align-items: center; gap: 0.5rem; }
         @media (max-width: 991.98px) {
             .navbar-collapse { background: rgba(15,23,42,0.98); border-radius: 12px; padding: 1rem; margin-top: 0.5rem; border: 1px solid rgba(255,255,255,0.08); }
             [data-bs-theme="light"] .navbar-collapse { background: rgba(255,255,255,0.98); border: 1px solid rgba(0,0,0,0.1); }
             .navbar-collapse .nav-item { padding: 0.25rem 0; }
+            /* Login button in hamburger — always solid colors */
+            .navbar-collapse .btn-masuk {
+                background: #1e40af !important;
+                color: #fff !important;
+                border: none !important;
+                border-radius: 50px !important;
+                padding: 0.5rem 1.5rem !important;
+                font-weight: 600 !important;
+                text-align: center !important;
+                display: block !important;
+                width: 100% !important;
+            }
+            [data-bs-theme="light"] .navbar-collapse .btn-masuk {
+                background: #1e40af !important;
+                color: #fff !important;
+            }
+            .navbar-collapse .btn-masuk:hover { background: #1e3a8a !important; }
         }
         /* Mobile responsive */
         @media (max-width: 767.98px) {
@@ -148,30 +174,48 @@
             <a class="navbar-brand fw-bold" href="/">
                 <i class="bi bi-shield-check me-2"></i>Koneksaun Saudavel
             </a>
-            <!-- Hamburger toggle -->
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Menu">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <!-- Always-visible mobile controls: theme toggle + hamburger -->
+            <div class="mobile-controls d-lg-none">
+                <button class="theme-toggle-nav" onclick="toggleTheme()" title="Ganti tema" id="theme-btn-mobile" type="button">
+                    <i class="bi bi-moon-fill" id="theme-icon-mobile"></i>
+                </button>
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Menu">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
             <!-- Collapsible nav -->
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center gap-lg-2">
                     <li class="nav-item"><a class="nav-link-custom" href="#features">Fitur</a></li>
                     <li class="nav-item"><a class="nav-link-custom" href="#how-it-works">Cara Kerja</a></li>
                     <li class="nav-item"><a class="nav-link-custom" href="#report">Laporkan Domain</a></li>
-                    <li class="nav-item">
-                        <button class="theme-toggle-nav" onclick="toggleTheme()" title="Ganti tema" id="theme-btn" type="button">
+                    <!-- Desktop theme toggle (inside collapsible) -->
+                    <li class="nav-item d-none d-lg-block">
+                        <button class="theme-toggle-nav" onclick="toggleTheme()" title="Ganti tema" type="button">
                             <i class="bi bi-moon-fill" id="theme-icon"></i>
                         </button>
                     </li>
-                    <li class="nav-item" id="nav-login">
+                    <!-- Mobile: login in hamburger -->
+                    <li class="nav-item d-lg-none" id="nav-login-mobile">
+                        <a class="btn btn-masuk" href="/login">Masuk</a>
+                    </li>
+                    <!-- Desktop login (always visible) -->
+                    <li class="nav-item d-none d-lg-block" id="nav-login">
                         <a class="btn btn-outline-cta btn-sm" href="/login">Masuk</a>
                     </li>
-                    <li class="nav-item" id="nav-dashboard" style="display:none;">
+                    <li class="nav-item d-none d-lg-block" id="nav-dashboard" style="display:none;">
                         <a class="nav-link-custom" href="/dashboard">Dashboard</a>
                     </li>
-                    <li class="nav-item" id="nav-logout" style="display:none;">
+                    <li class="nav-item d-none d-lg-block" id="nav-logout" style="display:none;">
                         <form id="logout-form-home" method="POST" action="/logout" style="display:none;"></form>
                         <a class="nav-link-custom" href="#" onclick="document.getElementById('logout-form-home').submit(); return false;" style="color:#f56565;">
+                            Keluar
+                        </a>
+                    </li>
+                    <!-- Mobile logout -->
+                    <li class="nav-item d-lg-none" id="nav-logout-mobile" style="display:none;">
+                        <form id="logout-form-home-mobile" method="POST" action="/logout" style="display:none;"></form>
+                        <a class="nav-link-custom" href="#" onclick="document.getElementById('logout-form-home-mobile').submit(); return false;" style="color:#f56565;">
                             Keluar
                         </a>
                     </li>
@@ -492,12 +536,13 @@
     }
 
     function updateThemeIcon(theme) {
-        const icon = document.getElementById('theme-icon');
-        if (theme === 'dark') {
-            icon.className = 'bi bi-sun-fill';
-        } else {
-            icon.className = 'bi bi-moon-fill';
-        }
+        // Update all theme icons (mobile + desktop)
+        ['theme-icon', 'theme-icon-mobile'].forEach(id => {
+            const icon = document.getElementById(id);
+            if (icon) {
+                icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+            }
+        });
     }
 
     // Init theme — default light
@@ -513,8 +558,11 @@
             .then(data => {
                 if (data.authenticated) {
                     document.getElementById('nav-login').style.display = 'none';
+                    document.getElementById('nav-login-mobile').style.display = 'none';
                     document.getElementById('nav-dashboard').style.display = '';
+                    document.getElementById('nav-dashboard-mobile').style.display = '';
                     document.getElementById('nav-logout').style.display = '';
+                    document.getElementById('nav-logout-mobile').style.display = '';
                 }
             })
             .catch(() => {});
