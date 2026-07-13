@@ -6,7 +6,7 @@ Flask Application Entry Point
 import os
 import sqlite3
 from pathlib import Path
-from flask import Flask, g, session
+from flask import Flask, g, session, send_from_directory, Response
 
 from app.routes import api_bp, dashboard_bp
 from app.public_routes import public_bp
@@ -63,6 +63,11 @@ def create_app():
     @app.route('/health')
     def health():
         return {'status': 'ok', 'service': 'koneksaun-saudavel'}
+
+    # Robots.txt — block all crawlers from indexing this DNS blocker
+    @app.route('/robots.txt')
+    def robots_txt():
+        return send_from_directory(app.static_folder, 'robots.txt', mimetype='text/plain')
 
     return app
 
