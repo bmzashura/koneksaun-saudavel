@@ -9,10 +9,29 @@
         </div>
         <script>
         async function loadReports() {
-            const r = await fetch('/api/v1/reports/mine');
-            const d = await r.json();
             const tb = document.getElementById('reports-body');
-            if(d.reports&&d.reports.length){tb.innerHTML=d.reports.map(r=>'<tr><td><code>'+r.domain+'</code></td><td><span class="badge badge-rejected">'+r.category+'</span></td><td><span class="badge badge-'+r.status+'">'+r.status+'</span></td><td style="font-size:0.8rem;color:#64748b;">'+(r.created_at||'')+'</td></tr>').join('');}else{tb.innerHTML='<tr><td colspan="4" class="text-center text-muted py-4">Belum ada laporan dikirim</td></tr>';
+            try {
+                const r = await fetch('/api/v1/reports/mine');
+                const d = await r.json();
+                if (d.error) {
+                    tb.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i>Error: ' + d.error + '</td></tr>';
+                    return;
+                }
+                if (d.reports && d.reports.length) {
+                    tb.innerHTML = d.reports.map(r =>
+                        '<tr>' +
+                        '<td><code>' + (r.domain||'') + '</code></td>' +
+                        '<td><span class="badge badge-rejected">' + (r.category||'') + '</span></td>' +
+                        '<td><span class="badge badge-' + (r.status||'') + '">' + (r.status||'') + '</span></td>' +
+                        '<td style="font-size:0.8rem;color:#64748b;">' + (r.created_at||'') + '</td>' +
+                        '</tr>'
+                    ).join('');
+                } else {
+                    tb.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Belum ada laporan dikirim</td></tr>';
+                }
+            } catch(e) {
+                tb.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i>Gagal memuat laporan. Pastikan Anda sudah login.</td></tr>';
+            }
         }
         loadReports();
         </script>
