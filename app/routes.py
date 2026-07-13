@@ -8,7 +8,20 @@ import urllib.request
 from flask import Blueprint, jsonify, request, render_template, render_template_string
 from app.auth import login_required, admin_required
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from app.database import get_db, query_db
+
+def utc_to_dili(ts_str):
+    """Convert UTC timestamp string to Asia/Dili timezone for display."""
+    if not ts_str:
+        return ''
+    try:
+        utc_dt = datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
+        dili_dt = utc_dt.astimezone(ZoneInfo('Asia/Dili'))
+        return dili_dt.strftime('%a, %d %b %Y %H:%M:%S %Z')
+    except Exception:
+        return ts_str
+
 
 def update_blocklist(name: str, url: str):
     """Download blocklist from URL, save to db/blocklists/{name}.txt. Returns (count, hash)."""
@@ -240,17 +253,22 @@ def get_stats():
 
 @api_bp.route('/stats/daily', methods=['GET'])
 def get_daily_stats():
-    """Get daily blocked query counts for the last 7 days."""
+    """Get daily blocked query counts for the last 7 days in Asia/Dili timezone."""
     db = get_db()
     days = []
+    dili_tz = ZoneInfo('Asia/Dili')
+    now_dili = datetime.now(dili_tz)
     for i in range(6, -1, -1):
+        day = (now_dili - timedelta(days=i)).date()
+        # Query in UTC: convert Dili date to UTC range (Dili is UTC+9, so subtract 9h)
+        day_start_utc = datetime.combine(day, datetime.min.time()).astimezone(dili_tz).astimezone(ZoneInfo('UTC'))
+        day_end_utc = datetime.combine(day, datetime.max.time()).astimezone(dili_tz).astimezone(ZoneInfo('UTC'))
         day_result = db.execute("""
             SELECT COUNT(*) as count FROM dns_logs
-            WHERE blocked = 1 AND timestamp >= datetime('now', '-' || ? || ' days', 'start of day')
-            AND timestamp < datetime('now', '-' || ? || ' days', 'start of day', '+1 day')
-        """, (i, i)).fetchone()
+            WHERE blocked = 1 AND timestamp >= ? AND timestamp <= ?
+        """, (day_start_utc.isoformat(), day_end_utc.isoformat())).fetchone()
         days.append({
-            'date': (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d'),
+            'date': day.strftime('%Y-%m-%d'),
             'count': day_result['count'] if day_result else 0
         })
     return jsonify(days)
@@ -326,7 +344,13 @@ def get_logs():
     ).fetchone()['total']
 
     return jsonify({
-        'logs': [dict(row) for row in logs],
+        'logs': [{
+            'id': row['id'],
+            'domain': row['domain'],
+            'blocked': row['blocked'],
+            'category': row['category'],
+            'timestamp': utc_to_dili(row['timestamp'])
+        } for row in logs],
         'total': total,
         'page': page,
         'per_page': per_page,
