@@ -1,37 +1,379 @@
 {% extends "base.html" %}
 {% block title %}Dashboard - Koneksaun Saudavel{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
-{% block page_subtitle %}System overview and statistics{% endblock %}
+{% block page_subtitle %}Ikhtisar Sistem{% endblock %}
 {% block content %}
-<div class="row mb-4">
-            <div class="col-md-3"><div class="card-stat"><div class="d-flex justify-content-between"><div><div class="stat-value" id="total-blocked">-</div><div class="stat-label">Total Blocked</div></div><div class="stat-icon"><i class="bi bi-shield-x"></i></div></div></div></div>
-            <div class="col-md-3"><div class="card-stat"><div class="d-flex justify-content-between"><div><div class="stat-value" id="blocked-24h">-</div><div class="stat-label">Last 24 Hours</div></div><div class="stat-icon"><i class="bi bi-clock-history"></i></div></div></div></div>
-            <div class="col-md-3"><div class="card-stat"><div class="d-flex justify-content-between"><div><div class="stat-value" id="domains-count">-</div><div class="stat-label">Blocked Domains</div></div><div class="stat-icon"><i class="bi bi-list-check"></i></div></div></div></div>
-            <div class="col-md-3"><div class="card-stat"><div class="d-flex justify-content-between"><div><div class="stat-value">v1.0</div><div class="stat-label">Status</div></div><div class="stat-icon"><i class="bi bi-check-circle"></i></div></div></div></div>
+<!-- Stats row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card-stat h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value" id="total-blocked">-</div>
+                    <div class="stat-label">Total Terblokir</div>
+                </div>
+                <div class="stat-icon"><i class="bi bi-shield-x"></i></div>
+            </div>
         </div>
-        <div class="content-card mb-4">
-            <div class="card-header"><i class="bi bi-bar-chart me-2"></i>Top Blocked Domains (24h)</div>
-            <div class="card-body"><table class="table mb-0"><thead><tr><th>Domain</th><th>Count</th></tr></thead><tbody id="top-domains"><tr><td colspan="2" class="text-muted text-center">Loading...</td></tr></tbody></table></div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card-stat h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value" id="blocked-24h">-</div>
+                    <div class="stat-label">24 Jam Terakhir</div>
+                </div>
+                <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+            </div>
         </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card-stat h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value" id="domains-count">-</div>
+                    <div class="stat-label">Domain Terblokir</div>
+                </div>
+                <div class="stat-icon"><i class="bi bi-list-check"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card-stat h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-value">v1.0</div>
+                    <div class="stat-label">Status</div>
+                </div>
+                <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts row -->
+<div class="row g-3 mb-4">
+    <!-- Doughnut chart: blocked by category -->
+    <div class="col-lg-5">
+        <div class="content-card h-100">
+            <div class="card-header">
+                <span><i class="bi bi-pie-chart me-2"></i>Terblokir per Kategori</span>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <div class="chart-container-doughnut" style="width:100%; max-width:280px;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Bar chart: daily blocked -->
+    <div class="col-lg-7">
+        <div class="content-card h-100">
+            <div class="card-header">
+                <span><i class="bi bi-bar-chart me-2"></i>Query Terblokir Harian (7 Hari Terakhir)</span>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height:220px;">
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top blocked domains + Categories -->
+<div class="row g-3 mb-4">
+    <!-- Top domains table -->
+    <div class="col-lg-6">
         <div class="content-card">
-            <div class="card-header"><i class="bi bi-grid me-2"></i>Block Categories</div>
-            <div class="card-body" id="categories-list"><span class="text-muted">Loading...</span></div>
+            <div class="card-header">
+                <span><i class="bi bi-trophy me-2"></i>Domain Terbanyak Terblokir</span>
+            </div>
+            <div class="table-responsive-wrapper">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Domain</th>
+                            <th class="text-end">Jumlah</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-domains">
+                        <tr><td colspan="3" class="text-center text-muted py-3">Memuat...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <script>
-        async function loadStats() {
-            const r = await fetch('/api/v1/stats');
-            const d = await r.json();
-            document.getElementById('total-blocked').textContent = (d.total_blocked||0).toLocaleString();
-            document.getElementById('blocked-24h').textContent = (d.recent_blocked_24h||0).toLocaleString();
-            document.getElementById('domains-count').textContent = (d.blocked_domains_total||0).toLocaleString();
-            const tb = document.getElementById('top-domains');
-            if(d.top_domains&&d.top_domains.length){tb.innerHTML=d.top_domains.map(x=>'<tr><td><code>'+x.domain+'</code></td><td>'+x.count.toLocaleString()+'</td></tr>').join('');}else{tb.innerHTML='<tr><td colspan="2" class="text-muted text-center">No data</td></tr>';}
+    </div>
+    <!-- Category breakdown -->
+    <div class="col-lg-6">
+        <div class="content-card">
+            <div class="card-header">
+                <span><i class="bi bi-grid me-2"></i>Kategori Pemblokiran</span>
+            </div>
+            <div class="card-body" id="categories-list">
+                <span class="text-muted">Memuat...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Last updated -->
+<div class="text-center mt-2">
+    <small class="text-muted" id="last-updated" style="font-size:0.72rem;">
+        <i class="bi bi-arrow-clockwise me-1"></i>Terakhir diperbarui: -
+    </small>
+</div>
+
+<script>
+// Translation strings for dashboard
+const i18n = {
+    no_data: 'Tidak ada data',
+    active: 'Aktif',
+    disabled: 'Nonaktif',
+    domains: 'domain',
+    updated: 'Diperbarui',
+    never: 'belum pernah',
+};
+
+let categoryChartInstance = null;
+let dailyChartInstance = null;
+
+function getChartColors() {
+    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    return {
+        ads: isDark ? '#60a5fa' : '#3b82f6',
+        porn: isDark ? '#f87171' : '#ef4444',
+        gambling: isDark ? '#fbbf24' : '#f59e0b',
+        other: isDark ? '#a78bfa' : '#8b5cf6',
+    };
+}
+
+function getChartBgAlpha() {
+    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    return {
+        ads: isDark ? 'rgba(96,165,250,0.2)' : 'rgba(59,130,246,0.2)',
+        porn: isDark ? 'rgba(248,113,113,0.2)' : 'rgba(239,68,68,0.2)',
+        gambling: isDark ? 'rgba(251,191,36,0.2)' : 'rgba(245,158,11,0.2)',
+        other: isDark ? 'rgba(167,139,250,0.2)' : 'rgba(139,92,246,0.2)',
+    };
+}
+
+function getTextColor() {
+    return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? '#e2e8f0' : '#1a202c';
+}
+
+function getGridColor() {
+    return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)';
+}
+
+function formatNumber(n) {
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+    return n.toString();
+}
+
+async function loadStats() {
+    try {
+        const r = await fetch('/api/v1/stats');
+        const d = await r.json();
+        document.getElementById('total-blocked').textContent = formatNumber(d.total_blocked || 0);
+        document.getElementById('blocked-24h').textContent = formatNumber(d.recent_blocked_24h || 0);
+        document.getElementById('domains-count').textContent = formatNumber(d.blocked_domains_total || 0);
+
+        // Update top domains table
+        const tb = document.getElementById('top-domains');
+        const top = d.top_domains || [];
+        if (top.length) {
+            tb.innerHTML = top.slice(0, 8).map((x, i) =>
+                '<tr>' +
+                '<td class="text-muted" style="font-size:0.78rem;">' + (i + 1) + '</td>' +
+                '<td><code style="font-size:0.82rem;">' + x.domain + '</code></td>' +
+                '<td class="text-end"><span class="badge" style="background:var(--input-bg);color:var(--text-main);">' + formatNumber(x.count) + '</span></td>' +
+                '</tr>'
+            ).join('');
+        } else {
+            tb.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">' + i18n.no_data + '</td></tr>';
         }
-        async function loadCategories() {
-            const r = await fetch('/api/v1/categories');
-            const cats = await r.json();
-            document.getElementById('categories-list').innerHTML = cats.map(c=>'<div class="d-flex justify-content-between align-items-center p-2 mb-2" style="background:#f8f9fa;border-radius:8px;"><div><strong>'+(c.display_name||c.name)+'</strong><div class="text-muted" style="font-size:0.78rem;">'+(c.domains||0).toLocaleString()+' domains</div></div><span class="badge '+(c.enabled?'badge-active':'badge-disabled')+'">'+(c.enabled?'Active':'Disabled')+'</span></div>').join('');
-        }
-        loadStats(); loadCategories(); setInterval(loadStats,30000);
-        </script>
+
+        // Update categories list
+        const cats = d.by_category || [];
+        document.getElementById('categories-list').innerHTML = cats.map(c => {
+            const colors = getChartColors();
+            const color = colors[c.category] || '#6b7280';
+            const label = { ads: 'Iklan & Pelacak', porn: 'Dewasa', gambling: 'Judi', other: 'Lainnya' }[c.category] || c.category;
+            return '<div class="d-flex justify-content-between align-items-center p-2 mb-2" style="background:var(--input-bg);border-radius:8px;">' +
+                '<div class="d-flex align-items-center gap-2">' +
+                '<div style="width:10px;height:10px;border-radius:50%;background:' + color + ';flex-shrink:0;"></div>' +
+                '<strong style="font-size:0.85rem;">' + label + '</strong>' +
+                '</div>' +
+                '<span class="badge ' + (c.count > 0 ? 'badge-active' : 'badge-disabled') + '">' + formatNumber(c.count) + '</span>' +
+                '</div>';
+        }).join('');
+
+        // Update category chart
+        updateCategoryChart(cats);
+
+        // Update last updated
+        document.getElementById('last-updated').innerHTML =
+            '<i class="bi bi-arrow-clockwise me-1"></i>Terakhir diperbarui: ' + new Date().toLocaleTimeString();
+    } catch (e) {
+        console.error('Stats load error:', e);
+    }
+}
+
+async function loadDailyStats() {
+    try {
+        const r = await fetch('/api/v1/stats/daily');
+        const days = await r.json();
+        updateDailyChart(days);
+    } catch (e) {
+        console.error('Daily stats error:', e);
+    }
+}
+
+function updateCategoryChart(cats) {
+    const colors = getChartColors();
+    const ctx = document.getElementById('categoryChart');
+    if (!ctx) return;
+
+    const labels = [];
+    const data = [];
+    const bgColors = [];
+
+    cats.forEach(c => {
+        labels.push({ ads: 'Iklan & Pelacak', porn: 'Dewasa', gambling: 'Judi', other: 'Lainnya' }[c.category] || c.category);
+        data.push(c.count);
+        bgColors.push(colors[c.category] || '#6b7280');
+    });
+
+    if (categoryChartInstance) {
+        categoryChartInstance.data.labels = labels;
+        categoryChartInstance.data.datasets[0].data = data;
+        categoryChartInstance.data.datasets[0].backgroundColor = bgColors;
+        categoryChartInstance.update('none');
+    } else {
+        categoryChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: bgColors,
+                    borderWidth: 0,
+                    hoverOffset: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: getTextColor(),
+                            font: { size: 12 },
+                            padding: 12,
+                            usePointStyle: true,
+                            pointStyleWidth: 10,
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct = total > 0 ? ((context.raw / total) * 100).toFixed(1) : 0;
+                                return context.label + ': ' + formatNumber(context.raw) + ' (' + pct + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+function updateDailyChart(days) {
+    const ctx = document.getElementById('dailyChart');
+    if (!ctx) return;
+
+    const labels = days.map(d => {
+        const date = new Date(d.date);
+        return date.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
+    });
+    const data = days.map(d => d.count);
+
+    if (dailyChartInstance) {
+        dailyChartInstance.data.labels = labels;
+        dailyChartInstance.data.datasets[0].data = data;
+        dailyChartInstance.update('none');
+    } else {
+        dailyChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Terblokir',
+                    data: data,
+                    backgroundColor: getChartColors().ads,
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return formatNumber(context.raw) + ' query';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: getTextColor(), font: { size: 11 } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: getGridColor() },
+                        ticks: {
+                            color: getTextColor(),
+                            font: { size: 11 },
+                            callback: function(value) { return formatNumber(value); }
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Re-init charts on theme change
+const themeObserver = new MutationObserver(() => {
+    if (categoryChartInstance) {
+        categoryChartInstance.options.plugins.legend.labels.color = getTextColor();
+        categoryChartInstance.update('none');
+    }
+    if (dailyChartInstance) {
+        dailyChartInstance.options.scales.x.ticks.color = getTextColor();
+        dailyChartInstance.options.scales.y.ticks.color = getTextColor();
+        dailyChartInstance.options.scales.y.grid.color = getGridColor();
+        dailyChartInstance.data.datasets[0].backgroundColor = getChartColors().ads;
+        dailyChartInstance.update('none');
+    }
+});
+themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+
+// Init
+loadStats();
+loadDailyStats();
+setInterval(loadStats, 30000);
+setInterval(loadDailyStats, 60000);
+</script>
 {% endblock %}

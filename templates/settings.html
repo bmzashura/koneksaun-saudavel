@@ -5,7 +5,7 @@
 {% block content %}
         <!-- Block Categories -->
         <div class="content-card mb-4">
-            <div class="card-header"><i class="bi bi-grid me-2"></i>Block Categories</div>
+            <div class="card-header"><i class="bi bi-grid me-2"></i>Kategori Pemblokiran</div>
             <div class="card-body" id="category-list">
                 <span class="text-muted">Loading...</span>
             </div>
@@ -15,37 +15,42 @@
         <div class="content-card mb-4">
             <div class="card-header"><i class="bi bi-server me-2"></i>Upstream DNS Servers</div>
             <div class="card-body">
-                <p class="text-muted mb-3" style="font-size:0.875rem;">Servers used to resolve non-blocked domains.</p>
+                <p class="text-muted mb-3" style="font-size:0.875rem;">Server yang digunakan untuk menyelesaikan domain yang tidak diblokir.</p>
                 <ul class="list-group mb-0">
-                    <li class="list-group-item" style="background:#f8f9fa;border:none;">1.1.1.1 (Cloudflare)</li>
-                    <li class="list-group-item" style="background:#f8f9fa;border:none;">8.8.8.8 (Google)</li>
+                    <li class="list-group-item" style="background:var(--input-bg);border:none;color:var(--text-main);">1.1.1.1 (Cloudflare)</li>
+                    <li class="list-group-item" style="background:var(--input-bg);border:none;color:var(--text-main);">8.8.8.8 (Google)</li>
                 </ul>
             </div>
         </div>
 
         <!-- WHOIS Configuration -->
         <div class="content-card mb-4">
-            <div class="card-header"><i class="bi bi-shield-lock me-2"></i>WHOIS API (whoisjson.com)</div>
+            <div class="card-header"><i class="bi bi-shield-lock me-2"></i>API WHOIS (whoisjson.com)</div>
             <div class="card-body">
                 <p class="text-muted mb-3" style="font-size:0.875rem;">
-                    Used for domain age &amp; risk scoring during report review.
-                    Results are cached for 3 hours. Get your free API key at
+                    Digunakan untuk skor risiko &amp; usia domain saat tinjauan laporan.
+                    Hasil di-cache selama 3 jam. Dapatkan API key gratis di
                     <a href="https://whoisjson.com" target="_blank">whoisjson.com</a>
-                    (1,000 requests/month free).
+                    (1.000 request/bulan gratis).
                 </p>
                 <div class="mb-2">
-                    <label class="form-label" style="font-size:0.85rem;">API Key</label>
+                    <label class="form-label" style="font-size:0.85rem;">Kunci API</label>
                     <div class="d-flex align-items-center gap-2">
-                        <input type="password" id="whois-api-key" class="form-control form-control-sm"
-                               placeholder="Paste WHOISJSON API key here" style="max-width:420px;" />
+                        <div class="input-group password-input" style="max-width:420px;">
+                            <input type="password" id="whois-api-key" class="form-control form-control-sm"
+                                   placeholder="Tempelkan kunci API WHOISJSON di sini" />
+                            <button class="password-toggle" type="button" onclick="togglePasswordVisibility('whois-api-key', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
                         <span id="whois-key-status" class="badge badge-disabled" style="font-size:0.75rem;">Not configured</span>
                     </div>
                     <div class="form-text" style="font-size:0.75rem;">
                         Current key: <span id="whois-key-preview">-</span>
                     </div>
                 </div>
-                <button class="btn btn-sm btn-ks" onclick="saveWhoisKey()">
-                    <i class="bi bi-save me-1"></i>Save
+                <button class="btn btn-sm btn-primary" onclick="saveWhoisKey()">
+                    <i class="bi bi-save me-1"></i>Simpan
                 </button>
                 <div id="whois-msg" class="mt-2" style="font-size:0.85rem;"></div>
             </div>
@@ -53,12 +58,12 @@
 
         <!-- Service Info -->
         <div class="content-card">
-            <div class="card-header"><i class="bi bi-info-circle me-2"></i>Service Information</div>
+            <div class="card-header"><i class="bi bi-info-circle me-2"></i>Informasi Layanan</div>
             <div class="card-body">
-                <div class="stat-row"><span>Version</span><span class="badge badge-active">v1.0.0</span></div>
-                <div class="stat-row"><span>Server Time</span><span id="server-time">-</span></div>
-                <div class="stat-row"><span>Database</span><span class="badge badge-active">Connected</span></div>
-                <div class="stat-row"><span>Blocked Domains</span><span class="badge badge-active">744,610</span></div>
+                <div class="stat-row"><span>Versi</span><span class="badge badge-active">v1.0.0</span></div>
+                <div class="stat-row"><span>Waktu Server</span><span id="server-time">-</span></div>
+                <div class="stat-row"><span>Database</span><span class="badge badge-active">Terhubung</span></div>
+                <div class="stat-row"><span>Domain Terblokir</span><span class="badge badge-active">744,610</span></div>
             </div>
         </div>
 
@@ -72,7 +77,7 @@
                 const updated = c.updated_at ? c.updated_at.substring(0,10) : 'never';
                 const enabled = (c.enabled !== undefined) ? c.enabled : true;
                 const sourceLink = c.blocklist_url
-                    ? '<a href="'+c.blocklist_url+'" target="_blank" class="source-link" style="font-size:0.72rem;color:#3b82f6;"><i class="bi bi-box-arrow-up-right"></i> Source</a>'
+                    ? '<a href="'+c.blocklist_url+'" target="_blank" class="source-link" style="font-size:0.72rem;color:var(--accent);"><i class="bi bi-box-arrow-up-right"></i> Sumber</a>'
                     : '';
                 return '<div class="stat-row">' +
                     '<div>' +
@@ -82,9 +87,9 @@
                         '<div class="text-muted" style="font-size:0.72rem;">Updated: '+updated+'</div>' +
                     '</div>' +
                     '<div class="d-flex align-items-center gap-2">' +
-                        '<span class="badge '+(enabled?'badge-active':'badge-disabled')+'">'+(enabled?'Enabled':'Disabled')+'</span>' +
-                        '<button class="btn btn-sm btn-outline-ks" onclick="updateBlocklist(\''+c.name+'\')">' +
-                            '<i class="bi bi-arrow-clockwise"></i> Update' +
+                        '<span class="badge '+(enabled?'badge-active':'badge-disabled')+'">'+(enabled?'Aktif':'Nonaktif')+'</span>' +
+                        '<button class="btn btn-sm btn-secondary" onclick="updateBlocklist(\''+c.name+'\')">' +
+                            '<i class="bi bi-arrow-clockwise"></i> Perbarui' +
                         '</button>' +
                     '</div>' +
                 '</div>';
@@ -92,7 +97,7 @@
         }
 
         async function updateBlocklist(name) {
-            if (!confirm('Update blocklist for ' + name + '? This may take a moment.')) return;
+            if (!confirm('Perbarui daftar blokir untuk ' + name + '? Ini mungkin memakan waktu.')) return;
             const btn = event.target.closest('button');
             const orig = btn.innerHTML;
             btn.disabled = true;
@@ -110,6 +115,18 @@
         document.getElementById('server-time').textContent = new Date().toLocaleString();
         loadCategories();
         loadWhoisSettings();
+
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        }
 
         async function loadWhoisSettings() {
             try {
@@ -148,10 +165,10 @@
                     const status = document.getElementById('whois-key-status');
                     status.textContent = d.api_key_configured ? 'Configured' : 'Not configured';
                     status.className = d.api_key_configured ? 'badge badge-active' : 'badge badge-disabled';
-                    msg.textContent = 'Saved! WHOIS lookup is now active.';
+                    msg.textContent = 'Disimpan! Pencarian WHOIS sekarang aktif.';
                     msg.style.color = '#2ea857';
                 } else {
-                    msg.textContent = 'Error saving.';
+                    msg.textContent = 'Gagal menyimpan.';
                     msg.style.color = '#d93b3b';
                 }
             } catch(e) {

@@ -34,8 +34,8 @@
             <a class="navbar-brand fw-bold" href="/"><i class="bi bi-shield-check me-2"></i>Koneksaun Saudavel</a>
             <div class="d-flex gap-3 align-items-center">
                 <a class="nav-link-custom" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
-                <a class="nav-link-custom" href="/reports"><i class="bi bi-flag me-1"></i>Reports</a>
-                <a class="nav-link-custom text-danger" href="/logout"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
+                <a class="nav-link-custom" href="/reports"><i class="bi bi-flag me-1"></i>Laporan</a>
+                <a class="nav-link-custom text-danger" href="/logout"><i class="bi bi-box-arrow-right me-1"></i>Keluar</a>
             </div>
         </div>
     </nav>
@@ -45,7 +45,7 @@
             <div class="col-md-8 col-lg-6">
                 <div class="card" style="background:rgba(255,255,255,0.05);">
                     <div class="card-body p-4">
-                        <h4 class="mb-4"><i class="bi bi-person me-2"></i>Profile</h4>
+                        <h4 class="mb-4"><i class="bi bi-person me-2"></i>Profil</h4>
 
                         {% with messages = get_flashed_messages(with_categories=true) %}
                           {% if messages %}
@@ -62,7 +62,7 @@
                         <div class="mb-4">
                             <div class="row g-3">
                                 <div class="col-6">
-                                    <div class="info-label">Username</div>
+                                    <div class="info-label">Nama Pengguna</div>
                                     <div class="info-value">{{ user.username }}</div>
                                 </div>
                                 <div class="col-6">
@@ -78,12 +78,12 @@
                                     <div><span class="badge-role badge-{{ user.status }}">{{ user.status|upper }}</span></div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="info-label">Member Since</div>
+                                    <div class="info-label">Anggota Sejak</div>
                                     <div class="info-value">{{ user.created_at }}</div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="info-label">Last Login</div>
-                                    <div class="info-value">{{ user.last_login or 'Never' }}</div>
+                                    <div class="info-label">Login Terakhir</div>
+                                    <div class="info-value">{{ user.last_login or 'Belum pernah' }}</div>
                                 </div>
                             </div>
                         </div>
@@ -91,31 +91,31 @@
                         <hr style="border-color: rgba(255,255,255,0.1);">
 
                         <!-- Change Password -->
-                        <h5 class="mb-3"><i class="bi bi-key me-2"></i>Change Password</h5>
+                        <h5 class="mb-3"><i class="bi bi-key me-2"></i>Ubah Kata Sandi</h5>
                         <form method="POST" action="/profile/password">
                             <div class="mb-3">
-                                <label class="form-label" style="color:#94a3b8;">Current Password</label>
+                                <label class="form-label" style="color:#94a3b8;">Kata Sandi Saat Ini</label>
                                 <input type="password" name="current_password" class="form-control" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label" style="color:#94a3b8;">New Password</label>
+                                <label class="form-label" style="color:#94a3b8;">Kata Sandi Baru</label>
                                 <input type="password" name="new_password" class="form-control" minlength="6" required>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label" style="color:#94a3b8;">Confirm New Password</label>
+                                <label class="form-label" style="color:#94a3b8;">Konfirmasi Kata Sandi Baru</label>
                                 <input type="password" name="confirm_password" class="form-control" minlength="6" required>
                             </div>
                             <button type="submit" class="btn btn-primary w-100">
-                                <i class="bi bi-check2 me-1"></i>Update Password
+                                <i class="bi bi-check2 me-1"></i>Perbarui Kata Sandi
                             </button>
                         </form>
 
                         {% if session.role == 'admin' %}
                         <hr style="border-color: rgba(255,255,255,0.1);">
-                        <h5 class="mb-3 text-warning"><i class="bi bi-shield-lock me-2"></i>Admin: Reset Other User Password</h5>
+                        <h5 class="mb-3 text-warning"><i class="bi bi-shield-lock me-2"></i>Admin: Reset Kata Sandi Pengguna Lain</h5>
                         <form method="POST" action="/profile/admin-reset">
                             <div class="mb-3">
-                                <label class="form-label" style="color:#94a3b8;">User</label>
+                                <label class="form-label" style="color:#94a3b8;">Pengguna</label>
                                 <select name="target_user_id" class="form-control" required>
                                     {% for u in all_users %}
                                       {% if u.id != session.user_id %}
@@ -125,11 +125,11 @@
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label" style="color:#94a3b8;">New Password</label>
+                                <label class="form-label" style="color:#94a3b8;">Kata Sandi Baru</label>
                                 <input type="password" name="new_password" class="form-control" minlength="6" required>
                             </div>
                             <button type="submit" class="btn btn-outline-cta w-100">
-                                <i class="bi bi-person-check me-1"></i>Reset Password for User
+                                <i class="bi bi-person-check me-1"></i>Reset Kata Sandi
                             </button>
                         </form>
                         {% endif %}

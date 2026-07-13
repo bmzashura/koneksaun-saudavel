@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Review Reports - Koneksaun Saudavel{% endblock %}
 {% block page_title %}Review Reports{% endblock %}
-{% block page_subtitle %}Manage domain reports{% endblock %}
+{% block page_subtitle %}Kelola laporan domain{% endblock %}
 {% block content %}
 
 <style>
@@ -16,26 +16,26 @@
 </style>
 
 <div id="whois-panel" class="content-card" style="margin-bottom:1rem;display:none;">
-    <div class="card-header"><i class="bi bi-shield-lock me-2"></i>WHOIS Info — <span id="whois-domain"></span>
-        <button class="btn btn-sm btn-outline-secondary float-end" onclick="closeWhois()">Close</button>
+    <div class="card-header"><i class="bi bi-shield-lock me-2"></i>Info WHOIS — <span id="whois-domain"></span>
+        <button class="btn btn-sm btn-outline-secondary float-end" onclick="closeWhois()">Tutup</button>
     </div>
     <div class="card-body" id="whois-body">
-        <span class="whois-loading">Loading...</span>
+        <span class="whois-loading">Memuat...</span>
     </div>
 </div>
 
 <div class="content-card" style="margin-bottom:1rem;">
-    <div class="card-header"><i class="bi bi-hourglass me-2"></i>Pending Review</div>
+    <div class="card-header"><i class="bi bi-hourglass-split me-2"></i>Menunggu Tinjauan</div>
     <div class="card-body p-0">
         <table class="table mb-0">
-            <thead><tr><th>Domain</th><th>Category</th><th>Reporter</th><th>Date</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Domain</th><th>Kategori</th><th>Pelapor</th><th>Tanggal</th><th>Tindakan</th></tr></thead>
             <tbody id="pending-body"><tr><td colspan="5" class="text-center text-muted py-4">Loading...</td></tr></tbody>
         </table>
     </div>
 </div>
 
 <div class="content-card" style="margin-bottom:1rem;">
-    <div class="card-header"><i class="bi bi-check-circle me-2"></i>Approved Reports</div>
+    <div class="card-header"><i class="bi bi-check-circle me-2"></i>Laporan Disetujui</div>
     <div class="card-body p-0">
         <table class="table mb-0">
             <thead><tr><th>Domain</th><th>Category</th><th>Reporter</th><th>Date</th><th>Action</th></tr></thead>
@@ -45,11 +45,11 @@
 </div>
 
 <div class="content-card" style="margin-bottom:1rem;">
-    <div class="card-header"><i class="bi bi-x-circle me-2"></i>Rejected Reports</div>
+    <div class="card-header"><i class="bi bi-x-circle me-2"></i>Laporan Ditolak</div>
     <div class="card-body p-0">
         <table class="table mb-0">
-            <thead><tr><th>Domain</th><th>Category</th><th>Reporter</th><th>Date</th><th>Notes</th></tr></thead>
-            <tbody id="rejected-body"><tr><td colspan="5" class="text-center text-muted py-4">Loading...</td></tr></tbody>
+            <thead><tr><th>Domain</th><th>Kategori</th><th>Pelapor</th><th>Tanggal</th><th>Catatan</th></tr></thead>
+            <tbody id="rejected-body"><tr><td colspan="5" class="text-center text-muted py-4">Memuat...</td></tr></tbody>
         </table>
     </div>
 </div>
@@ -75,24 +75,24 @@ async function loadWhois(domain) {
     const body = document.getElementById('whois-body');
     document.getElementById('whois-domain').textContent = domain;
     panel.style.display = 'block';
-    body.innerHTML = '<span class="whois-loading">Loading WHOIS data...</span>';
+    body.innerHTML = '<span class="whois-loading">Memuat data WHOIS...</span>';
 
     try {
         const r = await fetch('/api/v1/whois/' + encodeURIComponent(domain), { credentials: 'include' });
         const d = await r.json();
 
         if (!d.success) {
-            body.innerHTML = '<span style="color:red;">WHOIS error: ' + (d.error || 'Unknown') + '</span>';
+            body.innerHTML = '<span style="color:red;">Error WHOIS: ' + (d.error || 'Tidak dikenal') + '</span>';
             return;
         }
 
-        const age = d.domain_age_days !== null ? d.domain_age_days + ' days' : 'Unknown';
-        const ageY = d.domain_age_years !== null ? '(' + d.domain_age_years + ' years)' : '';
-        const reg = d.registrar_name || 'Unknown';
+        const age = d.domain_age_days !== null ? d.domain_age_days + ' hari' : 'Tidak dikenal';
+        const ageY = d.domain_age_years !== null ? '(' + d.domain_age_years + ' tahun)' : '';
+        const reg = d.registrar_name || 'Tidak dikenal';
         const score = d.risk_score !== null ? d.risk_score : '?';
-        const level = d.risk_level || 'UNKNOWN';
-        const created = d.created_date ? d.created_date.split('T')[0] : 'Unknown';
-        const ns = (d.name_servers || []).slice(0, 3).join(', ') || 'Unknown';
+        const level = d.risk_level || 'TIDAK DIKETAHUI';
+        const created = d.created_date ? d.created_date.split('T')[0] : 'Tidak dikenal';
+        const ns = (d.name_servers || []).slice(0, 3).join(', ') || 'Tidak dikenal';
 
         const badgeClass = {
             'HIGH': 'whois-high', 'MEDIUM': 'whois-medium',
@@ -103,25 +103,25 @@ async function loadWhois(domain) {
             <div class="row">
                 <div class="col-md-4">
                     <table class="table table-sm mb-0" style="font-size:0.85rem;">
-                        <tr><td class="text-muted" style="width:110px;">Domain Age</td><td><strong>${age} ${ageY}</strong></td></tr>
-                        <tr><td class="text-muted">Created</td><td>${created}</td></tr>
+                        <tr><td class="text-muted" style="width:110px;">Usia Domain</td><td><strong>${age} ${ageY}</strong></td></tr>
+                        <tr><td class="text-muted">Dibuat</td><td>${created}</td></tr>
                         <tr><td class="text-muted">Registrar</td><td>${reg}</td></tr>
-                        <tr><td class="text-muted">Name Servers</td><td style="font-size:0.75rem;">${ns}</td></tr>
+                        <tr><td class="text-muted">Name Server</td><td style="font-size:0.75rem;">${ns}</td></tr>
                     </table>
                 </div>
                 <div class="col-md-4 text-center" style="padding-top:1rem;">
                     <div style="font-size:2rem;font-weight:700;">${score}</div>
                     <span class="whois-badge ${badgeClass}">${level}</span>
-                    <div style="font-size:0.75rem;color:#888;margin-top:4px;">Risk Score</div>
+                    <div style="font-size:0.75rem;color:#888;margin-top:4px;">Skor Risiko</div>
                 </div>
                 <div class="col-md-4" style="font-size:0.8rem;color:#666;padding-top:0.5rem;">
-                    <strong>Risk Guide:</strong><br/>
-                    +50 = &lt;7 days (HIGH — suspicious)<br/>
-                    +35 = 7-30 days (MEDIUM)<br/>
-                    +15 = 30-90 days (LOW)<br/>
-                    0 = 90-365 days (NEUTRAL)<br/>
-                    -10 = 1-5 years (VERY LOW)<br/>
-                    -20 = &gt;5 years (VERY LOW)
+                    <strong>Panduan Risiko:</strong><br/>
+                    +50 = &lt;7 hari (TINGGI — mencurigakan)<br/>
+                    +35 = 7-30 hari (SEDANG)<br/>
+                    +15 = 30-90 hari (RENDAH)<br/>
+                    0 = 90-365 hari (NETRAL)<br/>
+                    -10 = 1-5 tahun (SANGAT RENDAH)<br/>
+                    -20 = &gt;5 tahun (SANGAT RENDAH)
                 </div>
             </div>`;
     } catch(e) {
@@ -146,7 +146,7 @@ async function loadAll() {
         // Pending
         const pendBody = document.getElementById('pending-body');
         if (pend.length === 0) {
-            pendBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No pending reports</td></tr>';
+            pendBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Tidak ada laporan pending</td></tr>';
         } else {
             pendBody.innerHTML = pend.map(r => {
                 const domainEsc = r.domain.replace(/'/g, "\\'");
@@ -155,15 +155,15 @@ async function loadAll() {
                     '<td><span class="badge badge-rejected">' + r.category + '</span></td>' +
                     '<td>' + (r.reporter || '') + '</td>' +
                     '<td>' + (r.created_at || '') + '</td>' +
-                    '<td><button class="btn btn-sm btn-success me-1" onclick="doApprove(' + r.id + ', \'' + domainEsc + '\')">Approve</button>' +
-                    '<button class="btn btn-sm btn-danger" onclick="doReject(' + r.id + ', \'' + domainEsc + '\')">Reject</button></td></tr>';
+                    '<td><button class="btn btn-sm btn-success me-1" onclick="doApprove(' + r.id + ', \'' + domainEsc + '\')">Setujui</button>' +
+                    '<button class="btn btn-sm btn-danger" onclick="doReject(' + r.id + ', \'' + domainEsc + '\')">Tolak</button></td></tr>';
             }).join('');
         }
 
         // Approved
         const apprBody = document.getElementById('approved-body');
         if (approv.length === 0) {
-            apprBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No approved reports</td></tr>';
+            apprBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Tidak ada laporan disetujui</td></tr>';
         } else {
             apprBody.innerHTML = approv.map(r => {
                 const domainEsc = r.domain.replace(/'/g, "\\'");
@@ -172,14 +172,14 @@ async function loadAll() {
                     '<td><span class="badge badge-rejected">' + r.category + '</span></td>' +
                     '<td>' + (r.reporter || '') + '</td>' +
                     '<td>' + (r.created_at || '') + '</td>' +
-                    '<td><button class="btn btn-sm btn-warning" onclick="doRemove(' + r.id + ', \'' + domainEsc + '\', \'' + r.category + '\', this)">Remove from Blocklist</button></td></tr>';
+                    '<td><button class="btn btn-sm btn-warning" onclick="doRemove(' + r.id + ', \'' + domainEsc + '\', \'' + r.category + '\', this)">Hapus dari Blokir</button></td></tr>';
             }).join('');
         }
 
         // Rejected
         const rejBody = document.getElementById('rejected-body');
         if (rejct.length === 0) {
-            rejBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No rejected reports</td></tr>';
+            rejBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Tidak ada laporan ditolak</td></tr>';
         } else {
             rejBody.innerHTML = rejct.map(r => {
                 return '<tr>' +
@@ -197,7 +197,7 @@ async function loadAll() {
 
 async function doApprove(id, domain) {
     const msg = document.getElementById('msg-box');
-    msg.textContent = 'Approving ' + domain + '...';
+    msg.textContent = 'Menyetujui ' + domain + '...';
     try {
         const r = await fetch('/api/v1/reports/' + id + '/approve', {
             method: 'POST',
@@ -206,7 +206,7 @@ async function doApprove(id, domain) {
             body: JSON.stringify({notes: 'Approved via admin'})
         });
         const j = await r.json();
-        msg.textContent = j.message || ('Done: ' + r.status);
+        msg.textContent = j.message || ('Selesai: ' + r.status);
         loadAll();
     } catch(e) {
         msg.textContent = 'Error: ' + e.message;
@@ -215,7 +215,7 @@ async function doApprove(id, domain) {
 
 async function doReject(id, domain) {
     const msg = document.getElementById('msg-box');
-    msg.textContent = 'Rejecting ' + domain + '...';
+    msg.textContent = 'Menolak ' + domain + '...';
     try {
         const r = await fetch('/api/v1/reports/' + id + '/reject', {
             method: 'POST',
@@ -224,7 +224,7 @@ async function doReject(id, domain) {
             body: JSON.stringify({notes: 'Rejected via admin'})
         });
         const j = await r.json();
-        msg.textContent = j.message || ('Done: ' + r.status);
+        msg.textContent = j.message || ('Selesai: ' + r.status);
         loadAll();
     } catch(e) {
         msg.textContent = 'Error: ' + e.message;
@@ -232,9 +232,9 @@ async function doReject(id, domain) {
 }
 
 async function doRemove(id, domain, category, btn) {
-    if (!confirm('Remove ' + domain + ' from ' + category + ' blocklist?')) return;
+    if (!confirm('Hapus ' + domain + ' dari daftar blokir ' + category + '?')) return;
     const msg = document.getElementById('msg-box');
-    msg.textContent = 'Removing ' + domain + '...';
+    msg.textContent = 'Menghapus ' + domain + '...';
     btn.disabled = true;
     try {
         const r = await fetch('/api/v1/blocklist/' + domain, {
@@ -244,7 +244,7 @@ async function doRemove(id, domain, category, btn) {
             body: JSON.stringify({category: category, notes: 'Removed via admin'})
         });
         const j = await r.json();
-        msg.textContent = j.message || ('Done: ' + r.status);
+        msg.textContent = j.message || ('Selesai: ' + r.status);
         loadAll();
     } catch(e) {
         msg.textContent = 'Error: ' + e.message;

@@ -74,41 +74,41 @@
 <body>
     <div class="blocked-card">
         <div class="shield-icon"><i class="bi bi-shield-x"></i></div>
-        <h1 class="blocked-title">Access Blocked</h1>
+        <h1 class="blocked-title">Akses Diblokir</h1>
         <p class="blocked-subtitle">
-            The domain you are trying to access has been blocked on this network.<br>
-            Access is restricted to maintain network security and responsible internet use.
+            Domain yang Anda coba akses telah diblokir di jaringan ini.<br>
+            Akses dibatasi untuk menjaga keamanan jaringan dan penggunaan internet yang bertanggung jawab.
         </p>
         <div class="domain-box">
-            <div class="domain-label">Blocked Domain</div>
+            <div class="domain-label">Domain Terblokir</div>
             <div class="domain-value">{{ domain }}</div>
         </div>
         <div class="info-grid">
             <div class="info-item">
-                <div class="info-label">Category</div>
+                <div class="info-label">Kategori</div>
                 <div class="info-value">
                     <span class="badge-category badge-{{ category }}">{{ category|upper }}</span>
                 </div>
             </div>
             <div class="info-item">
-                <div class="info-label">Time</div>
+                <div class="info-label">Waktu</div>
                 <div class="info-value">{{ timestamp }}</div>
             </div>
             <div class="info-item">
                 <div class="info-label">Status</div>
-                <div class="info-value" style="color: #f87171;">BLOCKED</div>
+                <div class="info-value" style="color: #f87171;">TERBLOKIR</div>
             </div>
             <div class="info-item">
-                <div class="info-label">Protected By</div>
+                <div class="info-label">Dilindungi Oleh</div>
                 <div class="info-value">Koneksaun Saudavel</div>
             </div>
         </div>
         <a href="/" class="btn-dashboard">
-            <i class="bi bi-house me-1"></i>Back to Home
+            <i class="bi bi-house me-1"></i>Kembali ke Beranda
         </a>
         <div class="footer-note">
-            Want to appeal? Contact your network administrator.<br>
-            <a href="/login">Login to Dashboard</a> for more details.
+            Ingin mengajukan banding? Hubungi administrator jaringan Anda.<br>
+            <a href="/login">Login ke Dashboard</a> untuk detail lebih lanjut.
         </div>
     </div>
 </body>

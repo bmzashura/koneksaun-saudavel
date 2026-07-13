@@ -238,11 +238,28 @@ def get_stats():
     })
 
 
+@api_bp.route('/stats/daily', methods=['GET'])
+def get_daily_stats():
+    """Get daily blocked query counts for the last 7 days."""
+    db = get_db()
+    days = []
+    for i in range(6, -1, -1):
+        day_result = db.execute("""
+            SELECT COUNT(*) as count FROM dns_logs
+            WHERE blocked = 1 AND timestamp >= datetime('now', '-' || ? || ' days', 'start of day')
+            AND timestamp < datetime('now', '-' || ? || ' days', 'start of day', '+1 day')
+        """, (i, i)).fetchone()
+        days.append({
+            'date': (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d'),
+            'count': day_result['count'] if day_result else 0
+        })
+    return jsonify(days)
+
+
 @api_bp.route('/stats/reset', methods=['POST'])
 @admin_required
 def reset_stats():
     """Reset statistics counters."""
-    # stats reset not implemented (in-memory stats removed)
     return jsonify({'success': True})
 
 

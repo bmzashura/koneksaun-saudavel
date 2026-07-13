@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% block title %}User Management - Koneksaun Saudavel{% endblock %}
 {% block page_title %}User Management{% endblock %}
-{% block page_subtitle %}Manage registered users{% endblock %}
+{% block page_subtitle %}Kelola pengguna terdaftar{% endblock %}
 {% block content %}
         <div class="content-card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-people me-2"></i>Registered Users</span>
+                <span><i class="bi bi-people me-2"></i>Pengguna Terdaftar</span>
                 <button class="btn btn-sm btn-outline-light" onclick="loadUsers()" title="Refresh">
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
@@ -14,16 +14,16 @@
                 <table class="table mb-0">
                     <thead>
                         <tr>
-                            <th>Username</th>
+                            <th>Nama Pengguna</th>
                             <th>Role</th>
                             <th>Status</th>
-                            <th>Created</th>
-                            <th>Last Login</th>
-                            <th>Actions</th>
+                            <th>Dibuat</th>
+                            <th>Login Terakhir</th>
+                            <th>Tindakan</th>
                         </tr>
                     </thead>
                     <tbody id="users-body">
-                        <tr><td colspan="6" class="text-center text-muted py-4">Loading...</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-4">Memuat...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -34,21 +34,21 @@
             <div class="modal-dialog">
                 <div class="modal-content" style="background:#1e293b;color:#e2e8f0;">
                     <div class="modal-header border-secondary">
-                        <h5 class="modal-title"><i class="bi bi-key me-2"></i>Reset Password</h5>
+                        <h5 class="modal-title"><i class="bi bi-key me-2"></i>Reset Kata Sandi</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Reset password for: <strong id="reset-pwd-user"></strong></p>
+                        <p>Reset kata sandi untuk: <strong id="reset-pwd-user"></strong></p>
                         <input type="hidden" id="reset-pwd-user-id">
                         <div class="mb-3">
-                            <label class="form-label">New Password</label>
-                            <input type="password" id="reset-pwd-new" class="form-control" minlength="6" placeholder="Min 6 characters">
+                            <label class="form-label">Kata Sandi Baru</label>
+                            <input type="password" id="reset-pwd-new" class="form-control" minlength="6" placeholder="Minimal 6 karakter">
                         </div>
                     </div>
                     <div class="modal-footer border-secondary">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                         <button type="button" class="btn btn-primary" onclick="doResetPassword()">
-                            <i class="bi bi-check2 me-1"></i>Reset Password
+                            <i class="bi bi-check2 me-1"></i>Reset Kata Sandi
                         </button>
                     </div>
                 </div>
@@ -103,23 +103,23 @@
 
                     let actions = '';
                     if (u.status === 'pending') {
-                        actions += `<button class="action-btn btn-approve" onclick="approveUser(${u.id})" title="Approve user">
-                                        <i class="bi bi-check-circle-fill"></i> Approve
+                        actions += `<button class="action-btn btn-approve" onclick="approveUser(${u.id})" title="Setujui pengguna">
+                                        <i class="bi bi-check-circle-fill"></i> Setujui
                                      </button>
-                                     <button class="action-btn btn-reject" onclick="rejectUser(${u.id},'${u.username}')" title="Reject & delete">
-                                        <i class="bi bi-trash-fill"></i> Reject
+                                     <button class="action-btn btn-reject" onclick="rejectUser(${u.id},'${u.username}')" title="Tolak & hapus">
+                                        <i class="bi bi-trash-fill"></i> Tolak
                                      </button>`;
                     } else if (u.status === 'active') {
-                        actions += `<button class="action-btn btn-disable" onclick="disableUser(${u.id})" title="Disable account">
-                                        <i class="bi bi-slash-circle-fill"></i> Disable
+                        actions += `<button class="action-btn btn-disable" onclick="disableUser(${u.id})" title="Nonaktifkan akun">
+                                        <i class="bi bi-slash-circle-fill"></i> Nonaktifkan
                                      </button>`;
                     } else if (u.status === 'disabled') {
-                        actions += `<button class="action-btn btn-enable" onclick="enableUser(${u.id})" title="Enable account">
-                                        <i class="bi bi-play-circle-fill"></i> Enable
+                        actions += `<button class="action-btn btn-enable" onclick="enableUser(${u.id})" title="Aktifkan akun">
+                                        <i class="bi bi-play-circle-fill"></i> Aktifkan
                                      </button>`;
                     }
 
-                    actions += `<button class="action-btn btn-reset" onclick="showResetPwd(${u.id},'${u.username}')" title="Reset password">
+                    actions += `<button class="action-btn btn-reset" onclick="showResetPwd(${u.id},'${u.username}')" title="Reset kata sandi">
                                     <i class="bi bi-key-fill"></i> Reset
                                  </button>`;
 
@@ -131,17 +131,17 @@
                         `<td><span class="${roleClass}">${roleIcon} ${u.role.toUpperCase()}</span></td>` +
                         `<td><span class="${statusClass}">${statusIcon} ${statusLabel}</span></td>` +
                         `<td style="font-size:0.8rem;color:#64748b;">${u.created_at ? u.created_at.split(' ')[0] : '-'}</td>` +
-                        `<td style="font-size:0.8rem;color:#64748b;">${u.last_login || 'Never'}</td>` +
+                        `<td style="font-size:0.8rem;color:#64748b;">${u.last_login || 'Belum pernah'}</td>` +
                         `<td><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">${actions}</div></td>` +
                         '</tr>';
                 }).join('');
             } else {
-                tb.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No users</td></tr>';
+                tb.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Tidak ada pengguna</td></tr>';
             }
         }
 
         async function approveUser(userId) {
-            if (!confirm('Approve this user?')) return;
+            if (!confirm('Setujui pengguna ini?')) return;
             const r = await fetch(`/api/v1/users/${userId}/approve`, {method:'POST'});
             const d = await r.json();
             if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); return; }
@@ -149,7 +149,7 @@
         }
 
         async function rejectUser(userId, username) {
-            if (!confirm('Reject and DELETE user ' + username + '? This cannot be undone.')) return;
+            if (!confirm('Tolak dan HAPUS pengguna ' + username + '? Ini tidak bisa dibatalkan.')) return;
             const r = await fetch(`/api/v1/users/${userId}/reject`, {method:'POST'});
             const d = await r.json();
             if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); return; }
@@ -157,7 +157,7 @@
         }
 
         async function disableUser(userId) {
-            if (!confirm('Disable this user account?')) return;
+            if (!confirm('Nonaktifkan akun pengguna ini?')) return;
             const r = await fetch(`/api/v1/users/${userId}/disable`, {method:'POST'});
             const d = await r.json();
             if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); return; }
@@ -181,7 +181,7 @@
         async function doResetPassword() {
             const userId = document.getElementById('reset-pwd-user-id').value;
             const newPwd = document.getElementById('reset-pwd-new').value;
-            if (!newPwd || newPwd.length < 6) { alert('Password must be at least 6 characters.'); return; }
+            if (!newPwd || newPwd.length < 6) { alert('Kata sandi harus minimal 6 karakter.'); return; }
             const r = await fetch(`/api/v1/users/${userId}/reset-password`, {
                 method:'PUT',
                 headers:{'Content-Type':'application/json'},
