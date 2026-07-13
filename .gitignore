@@ -23,6 +23,9 @@ build/
 *.sqlite
 *.sqlite3
 
+# Blocklist files — generated/downloaded on server, do not commit
+db/blocklists/
+
 # Logs
 *.log
 logs/
