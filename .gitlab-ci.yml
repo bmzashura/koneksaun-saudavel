@@ -18,12 +18,15 @@ variables:
   SONAR_USER_HOME: "$CI_PROJECT_DIR/.sonar"
   GIT_DEPTH: "10"
 
-cache:
-  key: ${CI_COMMIT_REF_SLUG}
-  paths:
-    - .cache/pip
-    - .sonar
-    - .scannerwork
+# Cache disabled in runner 19.4 (no local cache adapter by default)
+# Re-enable when S3 cache backend configured in runner
+# cache:
+#   key: ${CI_COMMIT_REF_SLUG}
+#   paths:
+#     - .cache/pip
+#     - .sonar
+#     - .scannerwork
+#   policy: pull-push
 
 # --- Test Stage ---
 test:lint-and-import:
