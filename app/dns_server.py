@@ -26,10 +26,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-GATEWAY_IP = '172.17.12.177'
+GATEWAY_IP = os.getenv('GATEWAY_IP', '172.17.12.177')
 
 # Config
 DNS_PORT = 53
+# How a blocked domain is answered:
+#   'sinkhole' -> A record pointing at GATEWAY_IP, web server shows the block page
+#   'nxdomain' -> NXDOMAIN, browser shows a plain "site can't be reached"
+# No publicly-trusted certificate can be issued for an arbitrary blocked
+# hostname, so 'sinkhole' always produces a TLS name-mismatch interstitial
+# when the client uses HTTPS. 'nxdomain' avoids that warning entirely at the
+# cost of showing no branded page.
+BLOCK_MODE = os.getenv('BLOCK_MODE', 'sinkhole').strip().lower()
 BLOCKLIST_DIR = Path(__file__).parent.parent / "db" / "blocklists"
 PID_FILE = Path(__file__).parent.parent / "dns.pid"
 
@@ -146,6 +154,26 @@ def parse_dns_name(data: bytes, offset: int) -> tuple[str, int]:
             offset = pos
 
 
+def extract_question(query_data: bytes) -> bytes:
+    """Return ONLY the question section (QNAME + QTYPE + QCLASS).
+
+    query_data[12:] is NOT just the question: it also carries every
+    additional record that followed it, most importantly the EDNS0 OPT
+    pseudo-record that virtually every modern resolver sends. Slicing
+    that tail blindly and appending the answer section afterwards puts
+    the answer *after* the OPT record, so resolvers reject the reply as
+    a malformed packet instead of reading the A record.
+
+    Returns the question section truncated at the end of QCLASS.
+    """
+    try:
+        _, name_end = parse_dns_name(query_data, 12)
+    except Exception:
+        return query_data[12:]
+    end = min(name_end + 4, len(query_data))  # +4 = QTYPE (2) + QCLASS (2)
+    return query_data[12:end]
+
+
 def build_dns_response(query_data: bytes, nxdomain: bool = False) -> bytes:
     """Build DNS response from query."""
     if len(query_data) < 12:
@@ -161,8 +189,7 @@ def build_dns_response(query_data: bytes, nxdomain: bool = False) -> bytes:
         flags = struct.pack('!H', 0x8180)  # Response, no error
 
     # Question count = 1, Answer/Authority/Additional = 0
-    question = query_data[12:]
-    question_len = len(question)
+    question = extract_question(query_data)
 
     # Build response: header (12) + question + authority section
     response = txn_id + flags + b'\x00\x01' + b'\x00\x00' + b'\x00\x00' + b'\x00\x00' + question
@@ -172,14 +199,17 @@ def build_dns_response(query_data: bytes, nxdomain: bool = False) -> bytes:
 
 def build_address_answer(question_data: bytes, ip: str) -> bytes:
     """Build an A record answer section pointing to gateway IP."""
-    domain_name, _ = parse_dns_name(question_data, 0)
-    name_parts = domain_name.split('.')
-    encoded_name = b''
-    for part in name_parts:
-        encoded_name += struct.pack("!B", len(part)) + part.encode('ascii')
-    encoded_name += struct.pack("!B", 0)
+    # Reuse the original QNAME bytes verbatim instead of re-encoding the
+    # parsed name: preserves exact label casing / 0x20 randomisation and
+    # avoids corrupting labels that are not plain ASCII.
+    try:
+        _, name_end = parse_dns_name(question_data, 0)
+    except Exception:
+        name_end = len(question_data)
+    encoded_name = question_data[:name_end]
     rdata = socket.inet_aton(ip)
     answer = encoded_name
+    # TYPE=A (1), CLASS=IN (1), TTL=300, RDLENGTH=4
     answer += struct.pack("!HHIH", 1, 1, 300, 4)
     answer += rdata
     return answer
@@ -189,7 +219,7 @@ def send_blocked_response(query_data: bytes) -> bytes:
     """Send DNS response redirecting blocked domain to blocked gateway page."""
     txn_id = query_data[0:2]
     flags = struct.pack('!H', 0x8180)  # Response, no error
-    question_data = query_data[12:]
+    question_data = extract_question(query_data)
     answer_data = build_address_answer(question_data, GATEWAY_IP)
     response = (
         txn_id + flags + b'\x00\x01' + b'\x00\x01' + b'\x00\x00' + b'\x00\x00'
@@ -242,6 +272,8 @@ def handle_dns_query(query_data: bytes, client_addr: tuple) -> bytes:
             _stats['blocked'] += 1
             logger.info(f"BLOCKED [{category}] {domain} from {client_addr[0]}")
             log_query(domain, True, category, client_addr[0])
+            if BLOCK_MODE == 'nxdomain':
+                return send_nxdomain(query_data)
             return send_blocked_response(query_data)
 
     log_query(domain, False, '', client_addr[0])
