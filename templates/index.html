@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - Koneksaun Saudavel{% endblock %}
-{% block page_title %}Dashboard{% endblock %}
-{% block page_subtitle %}Ikhtisar Sistem{% endblock %}
+{% block title %}{{ t('dashboard_koneksaun_saudavel') }}{% endblock %}
+{% block page_title %}{{ t('dashboard') }}{% endblock %}
+{% block page_subtitle %}{{ t('ikhtisar_sistem') }}{% endblock %}
 {% block content %}
 <!-- Stats row -->
 <div class="row g-3 mb-4">
@@ -10,7 +10,7 @@
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="stat-value" id="total-blocked">-</div>
-                    <div class="stat-label">Total Terblokir</div>
+                    <div class="stat-label">{{ t('total_terblokir') }}</div>
                 </div>
                 <div class="stat-icon"><i class="bi bi-shield-x"></i></div>
             </div>
@@ -21,7 +21,7 @@
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="stat-value" id="blocked-24h">-</div>
-                    <div class="stat-label">24 Jam Terakhir</div>
+                    <div class="stat-label">{{ t('24_jam_terakhir') }}</div>
                 </div>
                 <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
             </div>
@@ -32,7 +32,7 @@
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="stat-value" id="domains-count">-</div>
-                    <div class="stat-label">Domain Terblokir</div>
+                    <div class="stat-label">{{ t('domain_terblokir') }}</div>
                 </div>
                 <div class="stat-icon"><i class="bi bi-list-check"></i></div>
             </div>
@@ -43,7 +43,7 @@
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="stat-value">v1.0</div>
-                    <div class="stat-label">Status</div>
+                    <div class="stat-label">{{ t('status') }}</div>
                 </div>
                 <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
             </div>
@@ -57,7 +57,7 @@
     <div class="col-lg-5">
         <div class="content-card h-100">
             <div class="card-header">
-                <span><i class="bi bi-pie-chart me-2"></i>Terblokir per Kategori</span>
+                <span><i class="bi bi-pie-chart me-2"></i>{{ t('terblokir_per_kategori') }}</span>
             </div>
             <div class="card-body d-flex align-items-center justify-content-center">
                 <div class="chart-container-doughnut" style="width:100%; max-width:280px;">
@@ -70,7 +70,7 @@
     <div class="col-lg-7">
         <div class="content-card h-100">
             <div class="card-header">
-                <span><i class="bi bi-bar-chart me-2"></i>Query Terblokir Harian (7 Hari Terakhir)</span>
+                <span><i class="bi bi-bar-chart me-2"></i>{{ t('query_terblokir_harian_7_hari_terakhir') }}</span>
             </div>
             <div class="card-body">
                 <div class="chart-container" style="height:220px;">
@@ -87,19 +87,19 @@
     <div class="col-lg-6">
         <div class="content-card">
             <div class="card-header">
-                <span><i class="bi bi-trophy me-2"></i>Domain Terbanyak Terblokir</span>
+                <span><i class="bi bi-trophy me-2"></i>{{ t('domain_terbanyak_terblokir') }}</span>
             </div>
             <div class="table-responsive-wrapper">
                 <table class="table mb-0">
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Domain</th>
-                            <th class="text-end">Jumlah</th>
+                            <th>{{ t('domain') }}</th>
+                            <th class="text-end">{{ t('jumlah') }}</th>
                         </tr>
                     </thead>
                     <tbody id="top-domains">
-                        <tr><td colspan="3" class="text-center text-muted py-3">Memuat...</td></tr>
+                        <tr><td colspan="3" class="text-center text-muted py-3">{{ t('memuat') }}</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -109,10 +109,10 @@
     <div class="col-lg-6">
         <div class="content-card">
             <div class="card-header">
-                <span><i class="bi bi-grid me-2"></i>Kategori Pemblokiran</span>
+                <span><i class="bi bi-grid me-2"></i>{{ t('kategori_pemblokiran') }}</span>
             </div>
             <div class="card-body" id="categories-list">
-                <span class="text-muted">Memuat...</span>
+                <span class="text-muted">{{ t('memuat') }}</span>
             </div>
         </div>
     </div>
@@ -121,19 +121,18 @@
 <!-- Last updated -->
 <div class="text-center mt-2">
     <small class="text-muted" id="last-updated" style="font-size:0.72rem;">
-        <i class="bi bi-arrow-clockwise me-1"></i>Terakhir diperbarui: -
-    </small>
+        <i class="bi bi-arrow-clockwise me-1"></i>{{ t('terakhir_diperbarui') }}</small>
 </div>
 
 <script>
 // Translation strings for dashboard
 const i18n = {
-    no_data: 'Tidak ada data',
-    active: 'Aktif',
-    disabled: 'Nonaktif',
-    domains: 'domain',
-    updated: 'Diperbarui',
-    never: 'belum pernah',
+    no_data: {{ t("tidak_ada_data")|tojson }},
+    active: {{ t("aktif")|tojson }},
+    disabled: {{ t("nonaktif")|tojson }},
+    domains: {{ t("domain")|tojson }},
+    updated: {{ t("diperbarui")|tojson }},
+    never: {{ t("belum_pernah")|tojson }},
 };
 
 let categoryChartInstance = null;
@@ -201,7 +200,7 @@ async function loadStats() {
         document.getElementById('categories-list').innerHTML = cats.map(c => {
             const colors = getChartColors();
             const color = colors[c.category] || '#6b7280';
-            const label = { ads: 'Iklan & Pelacak', porn: 'Dewasa', gambling: 'Judi', other: 'Lainnya' }[c.category] || c.category;
+            const label = { ads: {{ t("iklan_pelacak")|tojson }}, porn: {{ t("dewasa")|tojson }}, gambling: {{ t("judi")|tojson }}, other: {{ t("lainnya")|tojson }} }[c.category] || c.category;
             return '<div class="d-flex justify-content-between align-items-center p-2 mb-2" style="background:var(--input-bg);border-radius:8px;">' +
                 '<div class="d-flex align-items-center gap-2">' +
                 '<div style="width:10px;height:10px;border-radius:50%;background:' + color + ';flex-shrink:0;"></div>' +
@@ -216,9 +215,9 @@ async function loadStats() {
 
         // Update last updated
         document.getElementById('last-updated').innerHTML =
-            '<i class="bi bi-arrow-clockwise me-1"></i>Terakhir diperbarui: ' + new Date().toLocaleTimeString();
+            '<i class="bi bi-arrow-clockwise me-1"></i>' + {{ t("terakhir_diperbarui_label")|tojson }} + ' ' + new Date().toLocaleTimeString();
     } catch (e) {
-        console.error('Stats load error:', e);
+        console.error({{ t("stats_load_error")|tojson }}, e);
     }
 }
 
@@ -228,7 +227,7 @@ async function loadDailyStats() {
         const days = await r.json();
         updateDailyChart(days);
     } catch (e) {
-        console.error('Daily stats error:', e);
+        console.error({{ t("daily_stats_error")|tojson }}, e);
     }
 }
 
@@ -242,7 +241,7 @@ function updateCategoryChart(cats) {
     const bgColors = [];
 
     cats.forEach(c => {
-        labels.push({ ads: 'Iklan & Pelacak', porn: 'Dewasa', gambling: 'Judi', other: 'Lainnya' }[c.category] || c.category);
+        labels.push({ ads: {{ t("iklan_pelacak")|tojson }}, porn: {{ t("dewasa")|tojson }}, gambling: {{ t("judi")|tojson }}, other: {{ t("lainnya")|tojson }} }[c.category] || c.category);
         data.push(c.count);
         bgColors.push(colors[c.category] || '#6b7280');
     });
@@ -314,7 +313,7 @@ function updateDailyChart(days) {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Terblokir',
+                    label: {{ t("terblokir")|tojson }},
                     data: data,
                     backgroundColor: getChartColors().ads,
                     borderRadius: 6,

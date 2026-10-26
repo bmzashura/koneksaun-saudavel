@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koneksaun Saudavel - Pemblokir Konten DNS</title>
+    <title>Koneksaun Saudavel - {{ t('dns_content_blocker') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <style>
@@ -181,6 +181,24 @@
             .cta-section { padding: 2rem 1rem; }
             .feature-card { padding: 1.25rem; }
         }
+    
+        /* Language selector */
+        .lang-select {
+            width: auto;
+            max-width: 100%;
+            min-width: 132px;
+            display: inline-block;
+            flex: 0 0 auto;
+            padding: 0.4rem 0.55rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.82rem;
+            border-radius: 8px;
+            border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+            background: var(--bg-card, rgba(255, 255, 255, 0.06));
+            color: var(--text-main, inherit);
+            cursor: pointer;
+        }
+        .lang-select option { color: #1e293b; background: #fff; }
     </style>
 </head>
 <body>
@@ -192,79 +210,73 @@
             </a>
             <!-- Always-visible mobile controls: theme toggle + hamburger -->
             <div class="mobile-controls d-lg-none">
-                <button class="theme-toggle-nav" onclick="toggleTheme()" title="Ganti tema" id="theme-btn-mobile" type="button">
+                <button class="theme-toggle-nav" onclick="toggleTheme()" title="{{ t('ganti_tema') }}" id="theme-btn-mobile" type="button">
                     <i class="bi bi-moon-fill" id="theme-icon-mobile"></i>
                 </button>
-                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Menu">
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="{{ t('menu') }}">
                     <span class="navbar-toggler-icon"></span>
                 </button>
             </div>
             <!-- Collapsible nav -->
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center gap-lg-2">
-                    <li class="nav-item"><a class="nav-link-custom" href="#features">Fitur</a></li>
-                    <li class="nav-item"><a class="nav-link-custom" href="#how-it-works">Cara Kerja</a></li>
-                    <li class="nav-item"><a class="nav-link-custom" href="#report">Laporkan Domain</a></li>
+                    <li class="nav-item"><a class="nav-link-custom" href="#features">{{ t('fitur') }}</a></li>
+                    <li class="nav-item"><a class="nav-link-custom" href="#how-it-works">{{ t('cara_kerja') }}</a></li>
+                    <li class="nav-item"><a class="nav-link-custom" href="#report">{{ t('laporkan_domain') }}</a></li>
                     <!-- Desktop theme toggle (inside collapsible) -->
                     <li class="nav-item d-none d-lg-block">
-                        <button class="theme-toggle-nav" onclick="toggleTheme()" title="Ganti tema" type="button">
+                        <button class="theme-toggle-nav" onclick="toggleTheme()" title="{{ t('ganti_tema') }}" type="button">
                             <i class="bi bi-moon-fill" id="theme-icon"></i>
                         </button>
                     </li>
                     <!-- Desktop login button (solid blue, visible on both themes) -->
                     <li class="nav-item d-none d-lg-block" id="nav-login">
-                        <a class="btn btn-desktop-login" href="/login">Masuk</a>
+                        <a class="btn btn-desktop-login" href="/login">{{ t('masuk') }}</a>
                     </li>
                     <li class="nav-item d-none d-lg-block force-hide" id="nav-dashboard">
-                        <a class="nav-link-custom" href="/dashboard">Dashboard</a>
+                        <a class="nav-link-custom" href="/dashboard">{{ t('dashboard') }}</a>
                     </li>
                     <li class="nav-item d-none d-lg-block force-hide" id="nav-logout">
                         <form id="logout-form-home" method="POST" action="/logout"></form>
-                        <a class="nav-link-custom" href="#" onclick="document.getElementById('logout-form-home').submit(); return false;" style="color:#f56565;">
-                            Keluar
-                        </a>
+                        <a class="nav-link-custom" href="#" onclick="document.getElementById('logout-form-home').submit(); return false;" style="color:#f56565;">{{ t('keluar') }}</a>
                     </li>
                     <!-- Mobile: login in hamburger -->
                     <li class="nav-item d-lg-none" id="nav-login-mobile">
-                        <a class="btn btn-masuk" href="/login">Masuk</a>
+                        <a class="btn btn-masuk" href="/login">{{ t('masuk') }}</a>
                     </li>
                     <!-- Mobile: dashboard (inside hamburger) -->
                     <li class="nav-item d-lg-none force-hide" id="nav-dashboard-mobile">
-                        <a class="nav-link-custom" href="/dashboard">Dashboard</a>
+                        <a class="nav-link-custom" href="/dashboard">{{ t('dashboard') }}</a>
                     </li>
                     <!-- Mobile logout -->
                     <li class="nav-item d-lg-none force-hide" id="nav-logout-mobile">
                         <form id="logout-form-home-mobile" method="POST" action="/logout"></form>
-                        <a class="nav-link-custom" href="#" onclick="document.getElementById('logout-form-home-mobile').submit(); return false;" style="color:#f56565;">
-                            Keluar
-                        </a>
+                        <a class="nav-link-custom" href="#" onclick="document.getElementById('logout-form-home-mobile').submit(); return false;" style="color:#f56565;">{{ t('keluar') }}</a>
                     </li>
                 </ul>
             </div>
         </div>
-    </nav>
+    <select class="lang-select" onchange="window.location.href='/lang/' + this.value + '?next=' + encodeURIComponent(window.location.pathname + window.location.search);" title="{{ t('bahasa') }}" aria-label="{{ t('bahasa') }}">
+                        {% for code in lang_codes %}
+                        <option value="{{ code }}"{% if code == current_lang %} selected{% endif %}>{{ lang_names[code] }}</option>
+                        {% endfor %}
+                    </select></nav>
 
     <!-- Hero -->
     <section class="hero-section">
         <div class="container">
             <div class="shield-icon"><i class="bi bi-shield-check"></i></div>
             <h1 class="hero-title">Koneksaun Saudavel</h1>
-            <p class="hero-subtitle">
-                Pemblokiran konten berbasis DNS untuk jaringan rumah & kantor.
-                Blokir iklan, konten dewasa, dan situs judi —
-                untuk internet yang lebih aman dan bertanggung jawab.
-            </p>
+            <p class="hero-subtitle">{{ t('pemblokiran_konten_berbasis_dns_untuk_jaringan_rumah_kantor_blokir_iklan_konten_dewasa_dan_situs_judi_untuk_internet_yang_lebih_aman_dan_bertanggung_jawab') }}</p>
             <div class="d-flex justify-content-center gap-3 flex-wrap mb-4">
                 <span class="badge-protected">
-                    <i class="bi bi-check-circle me-1"></i>744K+ Domain Terlindungi
-                </span>
+                    <i class="bi bi-check-circle me-1"></i>{{ t('744k_domain_terlindungi') }}</span>
                 <span class="badge-protected">
-                    <i class="bi bi-shield-lock me-1"></i>Privasi Utama
-                </span>
+                    <i class="bi bi-shield-lock me-1"></i>{{ t('privasi_utama') }}</span>
             </div>
             <div class="d-flex justify-content-center gap-3 flex-wrap">
-                <a href="/login" class="btn btn-cta">Mulai Perlindungan</a>
-                <a href="#how-it-works" class="btn btn-outline-cta">Pelajari Lebih Lanjut</a>
+                <a href="/login" class="btn btn-cta">{{ t('mulai_perlindungan') }}</a>
+                <a href="#how-it-works" class="btn btn-outline-cta">{{ t('pelajari_lebih_lanjut') }}</a>
             </div>
         </div>
     </section>
@@ -276,25 +288,25 @@
                 <div class="col-md-3 col-6">
                     <div class="stats-card">
                         <div class="stats-number">744,610</div>
-                        <div class="stats-label">Domain Terblokir</div>
+                        <div class="stats-label">{{ t('domain_terblokir') }}</div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6">
                     <div class="stats-card">
                         <div class="stats-number">3</div>
-                        <div class="stats-label">Kategori Pemblokiran</div>
+                        <div class="stats-label">{{ t('kategori_pemblokiran') }}</div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6">
                     <div class="stats-card">
                         <div class="stats-number">100%</div>
-                        <div class="stats-label">Lokal — Tanpa Cloud</div>
+                        <div class="stats-label">{{ t('lokal_tanpa_cloud') }}</div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6">
                     <div class="stats-card">
                         <div class="stats-number">0</div>
-                        <div class="stats-label">IP Klien Terlog</div>
+                        <div class="stats-label">{{ t('ip_klien_terlog') }}</div>
                     </div>
                 </div>
             </div>
@@ -304,66 +316,48 @@
     <!-- Features -->
     <section class="py-5" id="features">
         <div class="container">
-            <h2 class="section-title">Fitur Perlindungan</h2>
+            <h2 class="section-title">{{ t('fitur_perlindungan') }}</h2>
             <div class="row g-4">
                 <div class="col-md-4">
                     <div class="feature-card">
                         <div class="feature-icon"><i class="bi bi-ban"></i></div>
-                        <div class="feature-title">Blokir Iklan & Pelacak</div>
-                        <div class="feature-desc">
-                            Hilangkan iklan dan pelacak di semua perangkat yang terhubung ke jaringan.
-                            Browsing lebih cepat dan privat.
-                        </div>
+                        <div class="feature-title">{{ t('blokir_iklan_pelacak') }}</div>
+                        <div class="feature-desc">{{ t('hilangkan_iklan_dan_pelacak_di_semua_perangkat_yang_terhubung_ke_jaringan_browsing_lebih_cepat_dan_privat') }}</div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card">
                         <div class="feature-icon"><i class="bi bi-lock"></i></div>
-                        <div class="feature-title">Konten Dewasa</div>
-                        <div class="feature-desc">
-                            Filter otomatis untuk memblokir situs dewasa.
-                            Lindungi keluarga Anda dari konten yang tidak pantas.
-                        </div>
+                        <div class="feature-title">{{ t('konten_dewasa') }}</div>
+                        <div class="feature-desc">{{ t('filter_otomatis_untuk_memblokir_situs_dewasa_lindungi_keluarga_anda_dari_konten_yang_tidak_pantas') }}</div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card">
                         <div class="feature-icon"><i class="bi bi-dice-5"></i></div>
-                        <div class="feature-title">Situs Judi</div>
-                        <div class="feature-desc">
-                            Blokir situs betting dan judi.
-                            Untuk lingkungan yang lebih sehat dan fokus.
-                        </div>
+                        <div class="feature-title">{{ t('situs_judi') }}</div>
+                        <div class="feature-desc">{{ t('blokir_situs_betting_dan_judi_untuk_lingkungan_yang_lebih_sehat_dan_fokus') }}</div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card">
                         <div class="feature-icon"><i class="bi bi-speedometer2"></i></div>
-                        <div class="feature-title">Perlindungan Seluruh Jaringan</div>
-                        <div class="feature-desc">
-                            Satu server melindungi semua perangkat —
-                            PC, smartphone, tablet, smart TV, dll.
-                        </div>
+                        <div class="feature-title">{{ t('perlindungan_seluruh_jaringan') }}</div>
+                        <div class="feature-desc">{{ t('satu_server_melindungi_semua_perangkat_pc_smartphone_tablet_smart_tv_dll') }}</div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card">
                         <div class="feature-icon"><i class="bi bi-eye-slash"></i></div>
-                        <div class="feature-title">Privasi Terjamin</div>
-                        <div class="feature-desc">
-                            Tanpa logging IP klien. Tanpa pelacakan.
-                            Semua query DNS diproses secara lokal.
-                        </div>
+                        <div class="feature-title">{{ t('privasi_terjamin') }}</div>
+                        <div class="feature-desc">{{ t('tanpa_logging_ip_klien_tanpa_pelacakan_semua_query_dns_diproses_secara_lokal') }}</div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="feature-card">
                         <div class="feature-icon"><i class="bi bi-arrow-repeat"></i></div>
-                        <div class="feature-title">Daftar Blokir Dinamis</div>
-                        <div class="feature-desc">
-                            Domain yang dilaporkan pengguna akan ditinjau
-                            dan ditambahkan ke daftar blokir jika diperlukan.
-                        </div>
+                        <div class="feature-title">{{ t('daftar_blokir_dinamis') }}</div>
+                        <div class="feature-desc">{{ t('domain_yang_dilaporkan_pengguna_akan_ditinjau_dan_ditambahkan_ke_daftar_blokir_jika_diperlukan') }}</div>
                     </div>
                 </div>
             </div>
@@ -373,34 +367,34 @@
     <!-- How It Works -->
     <section class="info-section" id="how-it-works">
         <div class="container">
-            <h2 class="section-title">Cara Kerja</h2>
+            <h2 class="section-title">{{ t('cara_kerja') }}</h2>
             <div class="row g-5">
                 <div class="col-lg-6">
                     <div class="info-card">
-                        <div class="info-title"><i class="bi bi-diagram-3 me-2"></i>Arsitektur</div>
+                        <div class="info-title"><i class="bi bi-diagram-3 me-2"></i>{{ t('arsitektur') }}</div>
                         <div class="info-text">
-                            <p>Setiap perangkat yang terhubung ke jaringan menggunakan server DNS untuk menerjemahkan nama domain ke alamat IP. Koneksaun Saudavel bekerja sebagai proxy DNS yang intercepted setiap permintaan dan memverifikasi domain terhadap daftar blokir lokal. Jika domain ada di daftar blokir, query akan diblokir. Jika tidak, permintaan akan diteruskan ke server DNS upstream.</p>
+                            <p>{{ t('setiap_perangkat_yang_terhubung_ke_jaringan_menggunakan_server_dns_untuk_menerjemahkan_nama_domain_ke_alamat_ip_koneksaun_saudavel_bekerja_sebagai_proxy_dns_yang_intercepted_setiap_permintaan_dan_memverifikasi_domain_terhadap_daftar_blokir_lokal_jika_domain_ada_di_daftar_blokir_query_akan_diblokir_jika_tidak_permintaan_akan_diteruskan_ke_server_dns_upstream') }}</p>
                             <ul class="info-list mt-3">
-                                <li><strong>Klien</strong> → Kirim query DNS</li>
-                                <li><strong>DNS Server</strong> → Terima query di port 53</li>
-                                <li><strong>Filter DNS</strong> → Periksa domain terhadap daftar blokir</li>
-                                <li><strong>Blokir</strong> → NXDOMAIN untuk domain terblokir</li>
-                                <li><strong>Teruskan</strong> → Teruskan ke DNS upstream</li>
+                                <li><strong>{{ t('klien') }}</strong> {{ t('kirim_query_dns') }}</li>
+                                <li><strong>{{ t('dns_server') }}</strong> {{ t('terima_query_di_port_53') }}</li>
+                                <li><strong>{{ t('filter_dns') }}</strong> {{ t('periksa_domain_terhadap_daftar_blokir') }}</li>
+                                <li><strong>{{ t('blokir') }}</strong> {{ t('nxdomain_untuk_domain_terblokir') }}</li>
+                                <li><strong>{{ t('teruskan') }}</strong> {{ t('teruskan_ke_dns_upstream') }}</li>
                             </ul>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-6">
                     <div class="info-card">
-                        <div class="info-title"><i class="bi bi-list-check me-2"></i>Daftar Blokir</div>
+                        <div class="info-title"><i class="bi bi-list-check me-2"></i>{{ t('daftar_blokir') }}</div>
                         <div class="info-text">
-                            <p>Pengumpulan domain dari sumber terpercaya:</p>
+                            <p>{{ t('pengumpulan_domain_dari_sumber_terpercaya') }}</p>
                             <ul class="info-list mt-3">
-                                <li><strong>Iklan & Pelacak</strong> — 241.828 domain dari AdGuard SDNSFilter</li>
-                                <li><strong>Konten Dewasa</strong> — 500.282 domain dari BlocklistProject</li>
-                                <li><strong>Judi</strong> — 2.500 domain dari blocklistproject</li>
+                                <li><strong>{{ t('iklan_pelacak') }}</strong> {{ t('241_828_domain_dari_adguard_sdnsfilter') }}</li>
+                                <li><strong>{{ t('konten_dewasa') }}</strong> {{ t('500_282_domain_dari_blocklistproject') }}</li>
+                                <li><strong>{{ t('judi') }}</strong> {{ t('2_500_domain_dari_blocklistproject') }}</li>
                             </ul>
-                            <p class="mt-3">Total: <strong>744.610 domain</strong> terus diperbarui untuk perlindungan maksimal.</p>
+                            <p class="mt-3">{{ t('total') }} <strong>{{ t('744_610_domain') }}</strong>{{ t('terus_diperbarui_untuk_perlindungan_maksimal') }}</p>
                         </div>
                     </div>
                 </div>
@@ -411,50 +405,47 @@
     <!-- CTA -->
     <section class="container">
         <div class="cta-section">
-            <div class="cta-title">Lindungi Jaringan Anda Sekarang</div>
-            <div class="cta-desc">
-                Lindungi semua perangkat di jaringan rumah atau kantor Anda<br>
-                dengan penyaringan DNS yang cepat dan privat.
-            </div>
-            <a href="/login" class="btn btn-cta">Daftar & Mulai</a>
+            <div class="cta-title">{{ t('lindungi_jaringan_anda_sekarang') }}</div>
+            <div class="cta-desc">{{ t('lindungi_semua_perangkat_di_jaringan_rumah_atau_kantor_anda') }}<br>{{ t('dengan_penyaringan_dns_yang_cepat_dan_privat') }}</div>
+            <a href="/login" class="btn btn-cta">{{ t('daftar_mulai') }}</a>
         </div>
     </section>
 
     <!-- Report Section -->
     <section class="info-section" id="report">
         <div class="container">
-            <h2 class="section-title">Cara Melaporkan Domain</h2>
+            <h2 class="section-title">{{ t('cara_melaporkan_domain') }}</h2>
             <div class="row g-5">
                 <div class="col-lg-6">
                     <div class="info-card">
-                        <div class="info-title"><i class="bi bi-send me-2"></i>Langkah-langkah Pelaporan</div>
+                        <div class="info-title"><i class="bi bi-send me-2"></i>{{ t('langkah_langkah_pelaporan') }}</div>
                         <div class="info-text">
                             <div class="how-step">
                                 <div class="step-number">1</div>
                                 <div class="step-content">
-                                    <h5>Login ke Dashboard</h5>
-                                    <p>Masuk dengan akun terdaftar Anda di halaman login.</p>
+                                    <h5>{{ t('login_ke_dashboard') }}</h5>
+                                    <p>{{ t('masuk_dengan_akun_terdaftar_anda_di_halaman_login') }}</p>
                                 </div>
                             </div>
                             <div class="how-step">
                                 <div class="step-number">2</div>
                                 <div class="step-content">
-                                    <h5>Buka Halaman Laporan</h5>
-                                    <p>Klik menu "Laporan" di sidebar dashboard untuk membuka formulir pelaporan.</p>
+                                    <h5>{{ t('buka_halaman_laporan') }}</h5>
+                                    <p>{{ t('klik_menu_laporan_di_sidebar_dashboard_untuk_membuka_formulir_pelaporan') }}</p>
                                 </div>
                             </div>
                             <div class="how-step">
                                 <div class="step-number">3</div>
                                 <div class="step-content">
-                                    <h5>Isi Formulir</h5>
-                                    <p>Masukkan domain yang ingin Anda blokir, pilih kategori, dan jelaskan alasan Anda.</p>
+                                    <h5>{{ t('isi_formulir') }}</h5>
+                                    <p>{{ t('masukkan_domain_yang_ingin_anda_blokir_pilih_kategori_dan_jelaskan_alasan_anda') }}</p>
                                 </div>
                             </div>
                             <div class="how-step">
                                 <div class="step-number">4</div>
                                 <div class="step-content">
-                                    <h5>Kirim & Tunggu Tinjauan</h5>
-                                    <p>Setelah mengirim, tim admin akan meninjau laporan dan menambahkannya ke daftar blokir jika valid.</p>
+                                    <h5>{{ t('kirim_tunggu_tinjauan') }}</h5>
+                                    <p>{{ t('setelah_mengirim_tim_admin_akan_meninjau_laporan_dan_menambahkannya_ke_daftar_blokir_jika_valid') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -462,21 +453,19 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="info-card">
-                        <div class="info-title"><i class="bi bi-info-circle me-2"></i>Informasi Penting</div>
+                        <div class="info-title"><i class="bi bi-info-circle me-2"></i>{{ t('informasi_penting') }}</div>
                         <div class="info-text">
-                            <p>Berikut beberapa hal yang perlu diketahui sebelum melaporkan domain:</p>
+                            <p>{{ t('berikut_beberapa_hal_yang_perlu_diketahui_sebelum_melaporkan_domain') }}</p>
                             <ul class="info-list mt-3">
-                                <li>Domain akan ditinjau oleh tim admin dalam 24 jam</li>
-                                <li>Pastikan domain tersebut memang termasuk dalam kategori yang dipilih</li>
-                                <li>Laporan yang tidak valid atau tidak relevan tidak akan diproses</li>
-                                <li>Semua pengguna dapat mengirim laporan — tidak terbatas pada admin</li>
-                                <li>Anda dapat memeriksa status laporan di halaman "Laporan"</li>
+                                <li>{{ t('domain_akan_ditinjau_oleh_tim_admin_dalam_24_jam') }}</li>
+                                <li>{{ t('pastikan_domain_tersebut_memang_termasuk_dalam_kategori_yang_dipilih') }}</li>
+                                <li>{{ t('laporan_yang_tidak_valid_atau_tidak_relevan_tidak_akan_diproses') }}</li>
+                                <li>{{ t('semua_pengguna_dapat_mengirim_laporan_tidak_terbatas_pada_admin') }}</li>
+                                <li>{{ t('anda_dapat_memeriksa_status_laporan_di_halaman_laporan') }}</li>
                             </ul>
                             <div class="mt-4 p-3 rounded" style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3);">
-                                <strong style="color:#3b82f6">Tips:</strong>
-                                <p style="margin-bottom:0; margin-top:0.5rem; color:var(--text-muted); font-size:0.85rem">
-                                    Sebelum melaporkan, coba kunjungi domain terlebih dahulu untuk memastikan kontennya memang tidak pantas atau melanggar kebijakan penggunaan internet yang bertanggung jawab.
-                                </p>
+                                <strong style="color:#3b82f6">{{ t('tips') }}</strong>
+                                <p style="margin-bottom:0; margin-top:0.5rem; color:var(--text-muted); font-size:0.85rem">{{ t('sebelum_melaporkan_coba_kunjungi_domain_terlebih_dahulu_untuk_memastikan_kontennya_memang_tidak_pantas_atau_melanggar_kebijakan_penggunaan_internet_yang_bertanggung_jawab') }}</p>
                             </div>
                         </div>
                     </div>
@@ -488,42 +477,34 @@
     <!-- Internet Safety Tips -->
     <section class="py-5">
         <div class="container">
-            <h2 class="section-title">Tips Internet Aman & Bertanggung Jawab</h2>
+            <h2 class="section-title">{{ t('tips_internet_aman_bertanggung_jawab') }}</h2>
             <div class="row g-4">
                 <div class="col-md-3">
                     <div class="feature-card">
                         <div class="feature-icon"><i class="bi bi-people"></i></div>
-                        <div class="feature-title">Pantau Anak-anak</div>
-                        <div class="feature-desc">
-                            Gunakan alat kontrol orang tua dan pantau aktivitas online anak-anak. Komunikasi terbuka tentang risiko internet juga sangat penting.
-                        </div>
+                        <div class="feature-title">{{ t('pantau_anak_anak') }}</div>
+                        <div class="feature-desc">{{ t('gunakan_alat_kontrol_orang_tua_dan_pantau_aktivitas_online_anak_anak_komunikasi_terbuka_tentang_risiko_internet_juga_sangat_penting') }}</div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="feature-card">
                         <div class="feature-icon"><i class="bi bi-key"></i></div>
-                        <div class="feature-title">Gunakan Kata Sandi Kuat</div>
-                        <div class="feature-desc">
-                            Buat kata sandi unik untuk setiap akun. Gunakan minimal 12 karakter dengan campuran huruf, angka, dan simbol.
-                        </div>
+                        <div class="feature-title">{{ t('gunakan_kata_sandi_kuat') }}</div>
+                        <div class="feature-desc">{{ t('buat_kata_sandi_unik_untuk_setiap_akun_gunakan_minimal_12_karakter_dengan_campuran_huruf_angka_dan_simbol') }}</div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="feature-card">
                         <div class="feature-icon"><i class="bi bi-shield-check"></i></div>
-                        <div class="feature-title">Hindari Situs Tidak Aman</div>
-                        <div class="feature-desc">
-                            Periksa URL sebelum memasukkan informasi sensitif. Pastikan ada HTTPS dan ikon gembok di address bar browser Anda.
-                        </div>
+                        <div class="feature-title">{{ t('hindari_situs_tidak_aman') }}</div>
+                        <div class="feature-desc">{{ t('periksa_url_sebelum_memasukkan_informasi_sensitif_pastikan_ada_https_dan_ikon_gembok_di_address_bar_browser_anda') }}</div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="feature-card">
                         <div class="feature-icon"><i class="bi bi-clock"></i></div>
-                        <div class="feature-title">Batasi Waktu Layar</div>
-                        <div class="feature-desc">
-                            Tetapkan batas waktu penggunaan internet untuk diri sendiri dan keluarga. Gunakan fitur waktu layar di setiap perangkat.
-                        </div>
+                        <div class="feature-title">{{ t('batasi_waktu_layar') }}</div>
+                        <div class="feature-desc">{{ t('tetapkan_batas_waktu_penggunaan_internet_untuk_diri_sendiri_dan_keluarga_gunakan_fitur_waktu_layar_di_setiap_perangkat') }}</div>
                     </div>
                 </div>
             </div>
@@ -535,11 +516,9 @@
         <div class="container">
             <p class="mb-2">
                 <i class="bi bi-shield-check me-1"></i>
-                Koneksaun Saudavel — Pemblokir Konten DNS
+                Koneksaun Saudavel — {{ t('dns_content_blocker') }}
             </p>
-            <p class="mb-0">
-                Untuk internet yang lebih aman dan bertanggung jawab.
-                <a href="/login" style="color:var(--text-muted);text-decoration:underline;">Login Dashboard</a>
+            <p class="mb-0">{{ t('untuk_internet_yang_lebih_aman_dan_bertanggung_jawab') }}<a href="/login" style="color:var(--text-muted);text-decoration:underline;">{{ t('login_dashboard') }}</a>
             </p>
         </div>
     </footer>

@@ -1,30 +1,30 @@
 {% extends "base.html" %}
-{% block title %}Submit Report - Koneksaun Saudavel{% endblock %}
-{% block page_title %}Submit Report{% endblock %}
-{% block page_subtitle %}Laporkan domain untuk diblokir{% endblock %}
+{% block title %}{{ t('submit_report_koneksaun_saudavel') }}{% endblock %}
+{% block page_title %}{{ t('submit_report') }}{% endblock %}
+{% block page_subtitle %}{{ t('laporkan_domain_untuk_diblokir') }}{% endblock %}
 {% block content %}
 <div class="content-card mb-4">
-            <div class="card-header"><i class="bi bi-flag me-2"></i>Kirim Laporan Domain</div>
+            <div class="card-header"><i class="bi bi-flag me-2"></i>{{ t('kirim_laporan_domain') }}</div>
             <div class="card-body">
                 <form id="report-form">
-                    <div class="mb-3"><label class="form-label">Nama Domain</label><input type="text" class="form-control" id="domain" placeholder="contoh.com" required></div>
-                    <div class="mb-3"><label class="form-label">Alasan (opsional)</label><textarea class="form-control" id="reason" rows="2" placeholder="Mengapa domain ini harus diblokir?"></textarea></div>
-                    <button type="submit" class="btn btn-primary">Kirim Laporan</button>
+                    <div class="mb-3"><label class="form-label">{{ t('nama_domain') }}</label><input type="text" class="form-control" id="domain" placeholder="contoh.com" required></div>
+                    <div class="mb-3"><label class="form-label">{{ t('alasan_opsional') }}</label><textarea class="form-control" id="reason" rows="2" placeholder="{{ t('mengapa_domain_ini_harus_diblokir') }}"></textarea></div>
+                    <button type="submit" class="btn btn-primary">{{ t('kirim_laporan') }}</button>
                 </form>
             </div>
         </div>
         <div class="content-card">
-            <div class="card-header"><i class="bi bi-info-circle me-2"></i>Cara Kerja</div>
-            <div class="card-body"><ol class="mb-0 text-muted" style="font-size:0.875rem;"><li class="mb-2">Kirimkan domain untuk ditinjau</li><li class="mb-2">Admin meninjau laporan Anda</li><li class="mb-2">Jika disetujui, domain ditambahkan ke daftar blokir</li></ol></div>
+            <div class="card-header"><i class="bi bi-info-circle me-2"></i>{{ t('cara_kerja') }}</div>
+            <div class="card-body"><ol class="mb-0 text-muted" style="font-size:0.875rem;"><li class="mb-2">{{ t('kirimkan_domain_untuk_ditinjau') }}</li><li class="mb-2">{{ t('admin_meninjau_laporan_anda') }}</li><li class="mb-2">{{ t('jika_disetujui_domain_ditambahkan_ke_daftar_blokir') }}</li></ol></div>
         </div>
         <script>
         document.getElementById('report-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button');
-            btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim...';
+            btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{{ t("mengirim") }}';
             const r = await fetch('/api/v1/reports', {method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({domain:document.getElementById('domain').value,reason:document.getElementById('reason').value})});
-            if(r.ok){alert('Laporan terkirim!'); e.target.reset();}else{alert('Gagal mengirim laporan');}
-            btn.disabled = false; btn.innerHTML = 'Kirim Laporan';
+            if(r.ok){alert({{ t("laporan_terkirim")|tojson }}); e.target.reset();}else{alert({{ t("gagal_mengirim_laporan")|tojson }});}
+            btn.disabled = false; btn.innerHTML = '{{ t("kirim_laporan") }}';
         });
         </script>
 {% endblock %}

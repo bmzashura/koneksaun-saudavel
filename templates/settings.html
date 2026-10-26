@@ -1,21 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Settings - Koneksaun Saudavel{% endblock %}
-{% block page_title %}Settings{% endblock %}
-{% block page_subtitle %}Block Categories{% endblock %}
+{% block title %}{{ t('settings_koneksaun_saudavel') }}{% endblock %}
+{% block page_title %}{{ t('settings') }}{% endblock %}
+{% block page_subtitle %}{{ t('block_categories') }}{% endblock %}
 {% block content %}
         <!-- Block Categories -->
         <div class="content-card mb-4">
-            <div class="card-header"><i class="bi bi-grid me-2"></i>Kategori Pemblokiran</div>
+            <div class="card-header"><i class="bi bi-grid me-2"></i>{{ t('kategori_pemblokiran') }}</div>
             <div class="card-body" id="category-list">
-                <span class="text-muted">Loading...</span>
+                <span class="text-muted">{{ t('loading') }}</span>
             </div>
         </div>
 
         <!-- Upstream DNS -->
         <div class="content-card mb-4">
-            <div class="card-header"><i class="bi bi-server me-2"></i>Upstream DNS Servers</div>
+            <div class="card-header"><i class="bi bi-server me-2"></i>{{ t('upstream_dns_servers') }}</div>
             <div class="card-body">
-                <p class="text-muted mb-3" style="font-size:0.875rem;">Server yang digunakan untuk menyelesaikan domain yang tidak diblokir.</p>
+                <p class="text-muted mb-3" style="font-size:0.875rem;">{{ t('server_yang_digunakan_untuk_menyelesaikan_domain_yang_tidak_diblokir') }}</p>
                 <ul class="list-group mb-0">
                     <li class="list-group-item" style="background:var(--input-bg);border:none;color:var(--text-main);">1.1.1.1 (Cloudflare)</li>
                     <li class="list-group-item" style="background:var(--input-bg);border:none;color:var(--text-main);">8.8.8.8 (Google)</li>
@@ -27,43 +27,36 @@
         <div class="content-card mb-4">
             <div class="card-header"><i class="bi bi-shield-lock me-2"></i>API WHOIS (whoisjson.com)</div>
             <div class="card-body">
-                <p class="text-muted mb-3" style="font-size:0.875rem;">
-                    Digunakan untuk skor risiko &amp; usia domain saat tinjauan laporan.
-                    Hasil di-cache selama 3 jam. Dapatkan API key gratis di
-                    <a href="https://whoisjson.com" target="_blank">whoisjson.com</a>
-                    (1.000 request/bulan gratis).
-                </p>
+                <p class="text-muted mb-3" style="font-size:0.875rem;">{{ t('digunakan_untuk_skor_risiko_usia_domain_saat_tinjauan_laporan_hasil_di_cache_selama_3_jam_dapatkan_api_key_gratis_di') }}<a href="https://whoisjson.com" target="_blank">whoisjson.com</a> {{ t('1_000_request_bulan_gratis') }}</p>
                 <div class="mb-2">
-                    <label class="form-label" style="font-size:0.85rem;">Kunci API</label>
+                    <label class="form-label" style="font-size:0.85rem;">{{ t('kunci_api') }}</label>
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-group password-input" style="max-width:420px;">
                             <input type="password" id="whois-api-key" class="form-control form-control-sm"
-                                   placeholder="Tempelkan kunci API WHOISJSON di sini" />
+                                   placeholder="{{ t('tempelkan_kunci_api_whoisjson_di_sini') }}" />
                             <button class="password-toggle" type="button" onclick="togglePasswordVisibility('whois-api-key', this)">
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
-                        <span id="whois-key-status" class="badge badge-disabled" style="font-size:0.75rem;">Not configured</span>
+                        <span id="whois-key-status" class="badge badge-disabled" style="font-size:0.75rem;">{{ t('not_configured') }}</span>
                     </div>
-                    <div class="form-text" style="font-size:0.75rem;">
-                        Current key: <span id="whois-key-preview">-</span>
+                    <div class="form-text" style="font-size:0.75rem;">{{ t('current_key') }} <span id="whois-key-preview">-</span>
                     </div>
                 </div>
                 <button class="btn btn-sm btn-primary" onclick="saveWhoisKey()">
-                    <i class="bi bi-save me-1"></i>Simpan
-                </button>
+                    <i class="bi bi-save me-1"></i>{{ t('simpan') }}</button>
                 <div id="whois-msg" class="mt-2" style="font-size:0.85rem;"></div>
             </div>
         </div>
 
         <!-- Service Info -->
         <div class="content-card">
-            <div class="card-header"><i class="bi bi-info-circle me-2"></i>Informasi Layanan</div>
+            <div class="card-header"><i class="bi bi-info-circle me-2"></i>{{ t('informasi_layanan') }}</div>
             <div class="card-body">
-                <div class="stat-row"><span>Versi</span><span class="badge badge-active">v1.0.0</span></div>
-                <div class="stat-row"><span>Waktu Server</span><span id="server-time">-</span></div>
-                <div class="stat-row"><span>Database</span><span class="badge badge-active">Terhubung</span></div>
-                <div class="stat-row"><span>Domain Terblokir</span><span class="badge badge-active">744,610</span></div>
+                <div class="stat-row"><span>{{ t('versi') }}</span><span class="badge badge-active">v1.0.0</span></div>
+                <div class="stat-row"><span>{{ t('waktu_server') }}</span><span id="server-time">-</span></div>
+                <div class="stat-row"><span>{{ t('database') }}</span><span class="badge badge-active">{{ t('terhubung') }}</span></div>
+                <div class="stat-row"><span>{{ t('domain_terblokir') }}</span><span class="badge badge-active">744,610</span></div>
             </div>
         </div>
 
@@ -84,12 +77,12 @@
                         '<strong>'+name+'</strong>' +
                         sourceLink +
                         '<div class="text-muted" style="font-size:0.78rem;">'+count.toLocaleString()+' domains</div>' +
-                        '<div class="text-muted" style="font-size:0.72rem;">Updated: '+updated+'</div>' +
+                        '<div class="text-muted" style="font-size:0.72rem;">{{ t("updated_colon") }} '+updated+'</div>' +
                     '</div>' +
                     '<div class="d-flex align-items-center gap-2">' +
-                        '<span class="badge '+(enabled?'badge-active':'badge-disabled')+'">'+(enabled?'Aktif':'Nonaktif')+'</span>' +
+                        '<span class="badge '+(enabled?'badge-active':'badge-disabled')+'">'+(enabled?{{ t("aktif")|tojson }}:{{ t("nonaktif")|tojson }})+'</span>' +
                         '<button class="btn btn-sm btn-secondary" onclick="updateBlocklist(\''+c.name+'\')">' +
-                            '<i class="bi bi-arrow-clockwise"></i> Perbarui' +
+                            '<i class="bi bi-arrow-clockwise"></i> {{ t("perbarui") }}' +
                         '</button>' +
                     '</div>' +
                 '</div>';
@@ -97,7 +90,7 @@
         }
 
         async function updateBlocklist(name) {
-            if (!confirm('Perbarui daftar blokir untuk ' + name + '? Ini mungkin memakan waktu.')) return;
+            if (!confirm({{ t("perbarui_daftar_blokir_untuk")|tojson }} + ' ' + name + '? ' + {{ t("mungkin_makan_waktu")|tojson }})) return;
             const btn = event.target.closest('button');
             const orig = btn.innerHTML;
             btn.disabled = true;
@@ -105,9 +98,9 @@
             try {
                 const r = await fetch('/api/v1/categories/' + name + '/update-blocklist', {method:'POST'});
                 const d = await r.json();
-                alert(d.error || ('Updated: ' + (d.domains||'OK') + ' domains for ' + name));
+                alert(d.error || ({{ t("updated_colon")|tojson }} + ' ' + (d.domains||'OK') + ' ' + {{ t("domains_for")|tojson }} + ' ' + name));
                 loadCategories();
-            } catch(e) { alert('Update failed: ' + e); }
+            } catch(e) { alert({{ t("update_failed")|tojson }} + e); }
             btn.disabled = false;
             btn.innerHTML = orig;
         }
@@ -134,22 +127,22 @@
                 if (!r.ok) return;
                 const d = await r.json();
                 document.getElementById('whois-key-preview').textContent =
-                    d.api_key_configured ? d.api_key_preview : 'Not set';
+                    d.api_key_configured ? d.api_key_preview : {{ t("not_set")|tojson }};
                 const status = document.getElementById('whois-key-status');
                 if (d.api_key_configured) {
-                    status.textContent = 'Configured';
+                    status.textContent = {{ t("configured")|tojson }};
                     status.className = 'badge badge-active';
                 } else {
-                    status.textContent = 'Not configured';
+                    status.textContent = {{ t("not_configured")|tojson }};
                     status.className = 'badge badge-disabled';
                 }
-            } catch(e) { console.error('WHOIS settings load error:', e); }
+            } catch(e) { console.error({{ t("whois_settings_load_error")|tojson }}, e); }
         }
 
         async function saveWhoisKey() {
             const key = document.getElementById('whois-api-key').value.trim();
             const msg = document.getElementById('whois-msg');
-            msg.textContent = 'Saving...';
+            msg.textContent = {{ t("menyimpan")|tojson }};
             msg.style.color = '#888';
             try {
                 const r = await fetch('/api/v1/admin/settings/whois', {
@@ -161,18 +154,18 @@
                 if (d.success) {
                     document.getElementById('whois-api-key').value = '';
                     document.getElementById('whois-key-preview').textContent =
-                        d.api_key_configured ? '(saved — key active)' : 'Not set';
+                        d.api_key_configured ? {{ t("saved_key_active")|tojson }} : {{ t("not_set")|tojson }};
                     const status = document.getElementById('whois-key-status');
-                    status.textContent = d.api_key_configured ? 'Configured' : 'Not configured';
+                    status.textContent = d.api_key_configured ? {{ t("configured")|tojson }} : {{ t("not_configured")|tojson }};
                     status.className = d.api_key_configured ? 'badge badge-active' : 'badge badge-disabled';
-                    msg.textContent = 'Disimpan! Pencarian WHOIS sekarang aktif.';
+                    msg.textContent = {{ t("disimpan_pencarian_whois_sekarang_aktif")|tojson }};
                     msg.style.color = '#2ea857';
                 } else {
-                    msg.textContent = 'Gagal menyimpan.';
+                    msg.textContent = {{ t("gagal_menyimpan")|tojson }};
                     msg.style.color = '#d93b3b';
                 }
             } catch(e) {
-                msg.textContent = 'Request failed: ' + e;
+                msg.textContent = {{ t("request_failed")|tojson }} + e;
                 msg.style.color = '#d93b3b';
             }
             setTimeout(() => { msg.textContent = ''; }, 4000);

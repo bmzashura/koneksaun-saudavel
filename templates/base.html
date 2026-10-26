@@ -375,6 +375,24 @@
         /* Charts in cards */
         .chart-container { position: relative; height: 250px; }
         .chart-container-doughnut { position: relative; height: 220px; }
+    
+        /* Language selector */
+        .lang-select {
+            width: auto;
+            max-width: 100%;
+            min-width: 132px;
+            display: inline-block;
+            flex: 0 0 auto;
+            padding: 0.4rem 0.55rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.82rem;
+            border-radius: 8px;
+            border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+            background: var(--bg-card, rgba(255, 255, 255, 0.06));
+            color: var(--text-main, inherit);
+            cursor: pointer;
+        }
+        .lang-select option { color: #1e293b; background: #fff; }
     </style>
 </head>
 <body>
@@ -387,32 +405,35 @@
             <span class="emoji">🜃</span>
             <div>
                 <div class="name">Koneksaun Saudavel</div>
-                <div class="sub">DNS Content Blocker</div>
+                <div class="sub">{{ t('dns_content_blocker') }}</div>
             </div>
         </div>
         <ul class="sidebar-nav">
-            <li><a href="/dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
-            <li class="section-label">User</li>
-            <li id="nav-reports-user" style="display:none;"><a href="/reports"><i class="bi bi-flag"></i> My Reports</a></li>
-            <li id="nav-report-submit" style="display:none;"><a href="/reports/submit"><i class="bi bi-plus-circle"></i> Submit Report</a></li>
-            <li class="section-label">Admin</li>
-            <li id="nav-admin-reports" style="display:none;"><a href="/admin/reports"><i class="bi bi-shield-check"></i> Review Reports</a></li>
-            <li id="nav-admin-users" style="display:none;"><a href="/admin/users"><i class="bi bi-people"></i> User Management</a></li>
-            <li class="section-label">System</li>
-            <li><a href="/logs"><i class="bi bi-list-ul"></i> Query Logs</a></li>
-            <li><a href="/settings"><i class="bi bi-gear"></i> Settings</a></li>
+            <li><a href="/dashboard"><i class="bi bi-speedometer2"></i>{{ t('dashboard') }}</a></li>
+            <li class="section-label">{{ t('user') }}</li>
+            <li id="nav-reports-user" style="display:none;"><a href="/reports"><i class="bi bi-flag"></i>{{ t('my_reports') }}</a></li>
+            <li id="nav-report-submit" style="display:none;"><a href="/reports/submit"><i class="bi bi-plus-circle"></i>{{ t('submit_report') }}</a></li>
+            <li class="section-label">{{ t('admin') }}</li>
+            <li id="nav-admin-reports" style="display:none;"><a href="/admin/reports"><i class="bi bi-shield-check"></i>{{ t('review_reports') }}</a></li>
+            <li id="nav-admin-users" style="display:none;"><a href="/admin/users"><i class="bi bi-people"></i>{{ t('user_management') }}</a></li>
+            <li class="section-label">{{ t('system') }}</li>
+            <li><a href="/logs"><i class="bi bi-list-ul"></i>{{ t('query_logs') }}</a></li>
+            <li><a href="/settings"><i class="bi bi-gear"></i>{{ t('settings') }}</a></li>
         </ul>
         <div class="sidebar-footer">
             <div class="sidebar-user-info"><span id="current-user">—</span></div>
-            <button class="theme-toggle-sidebar" onclick="toggleTheme()" title="Toggle dark/light mode" id="theme-toggle-btn">
+            <button class="theme-toggle-sidebar" onclick="toggleTheme()" title="{{ t('toggle_dark_light_mode') }}" id="theme-toggle-btn">
                 <i class="bi bi-moon-fill" id="theme-icon"></i>
-                <span id="theme-label">Dark Mode</span>
+                <span id="theme-label">{{ t('dark_mode') }}</span>
             </button>
-            <form id="logout-form" method="POST" action="/logout" style="display:none;"></form>
+            <select class="lang-select" onchange="window.location.href='/lang/' + this.value + '?next=' + encodeURIComponent(window.location.pathname + window.location.search);" title="{{ t('bahasa') }}" aria-label="{{ t('bahasa') }}">
+                        {% for code in lang_codes %}
+                        <option value="{{ code }}"{% if code == current_lang %} selected{% endif %}>{{ lang_names[code] }}</option>
+                        {% endfor %}
+                    </select><form id="logout-form" method="POST" action="/logout" style="display:none;"></form>
             <a class="d-flex align-items-center gap-2 px-3 py-2 rounded-8 sidebar-logout" href="#"
                onclick="document.getElementById('logout-form').submit(); return false;">
-                <i class="bi bi-box-arrow-right"></i> Logout
-            </a>
+                <i class="bi bi-box-arrow-right"></i>{{ t('logout') }}</a>
         </div>
     </aside>
 
@@ -421,8 +442,8 @@
         <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
             <div class="page-header" style="margin-bottom:0;">
                 <div>
-                    <h2>{% block page_title %}Dashboard{% endblock %}</h2>
-                    <p>{% block page_subtitle %}Overview and statistics{% endblock %}</p>
+                    <h2>{% block page_title %}{{ t('dashboard') }}{% endblock %}</h2>
+                    <p>{% block page_subtitle %}{{ t('overview_and_statistics') }}{% endblock %}</p>
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -458,10 +479,10 @@
         const label = document.getElementById('theme-label');
         if (theme === 'dark') {
             icon.className = 'bi bi-sun-fill';
-            label.textContent = 'Light Mode';
+            label.textContent = {{ t("light_mode")|tojson }};
         } else {
             icon.className = 'bi bi-moon-fill';
-            label.textContent = 'Dark Mode';
+            label.textContent = {{ t("dark_mode")|tojson }};
         }
     }
 

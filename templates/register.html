@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Koneksaun Saudavel</title>
+    <title>{{ t('register_koneksaun_saudavel') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <style>
@@ -35,6 +35,24 @@
         .input-group.password-input { position: relative; }
         .input-group.password-input .form-control { padding-right: 2.75rem; }
         .input-group.password-input .password-toggle { right: 0.75rem; }
+    
+        /* Language selector */
+        .lang-select {
+            width: auto;
+            max-width: 100%;
+            min-width: 132px;
+            display: inline-block;
+            flex: 0 0 auto;
+            padding: 0.4rem 0.55rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.82rem;
+            border-radius: 8px;
+            border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+            background: var(--bg-card, rgba(255, 255, 255, 0.06));
+            color: var(--text-main, inherit);
+            cursor: pointer;
+        }
+        .lang-select option { color: #1e293b; background: #fff; }
     </style>
 </head>
 <body>
@@ -44,16 +62,20 @@
                 <i class="bi bi-shield-check me-2"></i>Koneksaun Saudavel
             </a>
             <div class="d-flex gap-3 align-items-center">
-                <a class="nav-link-custom" href="/">Home</a>
-                <span id="nav-login"><a class="btn btn-outline-cta btn-sm" href="/login">Login</a></span>
-                <span id="nav-dashboard" style="display:none;"><a class="nav-link-custom" href="/dashboard">Dashboard</a></span>
+                <a class="nav-link-custom" href="/">{{ t('home') }}</a>
+                <span id="nav-login"><a class="btn btn-outline-cta btn-sm" href="/login">{{ t('login') }}</a></span>
+                <span id="nav-dashboard" style="display:none;"><a class="nav-link-custom" href="/dashboard">{{ t('dashboard') }}</a></span>
                 <span id="nav-logout" style="display:none;">
                     <form id="logout-form-tpl" method="POST" action="/logout" style="display:none;"></form>
-                    <a class="nav-link-custom" href="#" onclick="document.getElementById('logout-form-tpl').submit(); return false;" style="color:#f56565;">Logout</a>
+                    <a class="nav-link-custom" href="#" onclick="document.getElementById('logout-form-tpl').submit(); return false;" style="color:#f56565;">{{ t('logout') }}</a>
                 </span>
             </div>
         </div>
-    </nav>
+    <select class="lang-select" onchange="window.location.href='/lang/' + this.value + '?next=' + encodeURIComponent(window.location.pathname + window.location.search);" title="{{ t('bahasa') }}" aria-label="{{ t('bahasa') }}">
+                        {% for code in lang_codes %}
+                        <option value="{{ code }}"{% if code == current_lang %} selected{% endif %}>{{ lang_names[code] }}</option>
+                        {% endfor %}
+                    </select></nav>
     <script>
     fetch('/api/v1/auth/me')
         .then(r => r.json())
@@ -70,8 +92,8 @@
     <div class="card" style="max-width: 400px; width: 100%;">
         <div class="card-body text-center">
             <div class="shield">🜃</div>
-            <h3 class="mt-2 mb-1 text-white">Buat Akun</h3>
-            <p class="text-muted mb-4">Bergabung dengan Koneksaun Saudavel</p>
+            <h3 class="mt-2 mb-1 text-white">{{ t('buat_akun') }}</h3>
+            <p class="text-muted mb-4">{{ t('bergabung_dengan_koneksaun_saudavel') }}</p>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
               {% if messages %}
@@ -85,23 +107,23 @@
 
             <form method="POST" action="/register">
                 <div class="mb-3 text-start">
-                    <label class="form-label text-white-50" style="font-size:0.8rem;">Nama Pengguna</label>
-                    <input type="text" name="username" class="form-control" placeholder="Nama Pengguna" required autofocus>
+                    <label class="form-label text-white-50" style="font-size:0.8rem;">{{ t('nama_pengguna') }}</label>
+                    <input type="text" name="username" class="form-control" placeholder="{{ t('nama_pengguna') }}" required autofocus>
                 </div>
                 <div class="mb-3 text-start">
-                    <label class="form-label text-white-50" style="font-size:0.8rem;">Email (opsional)</label>
+                    <label class="form-label text-white-50" style="font-size:0.8rem;">{{ t('email_opsional') }}</label>
                     <input type="email" name="email" class="form-control" placeholder="email@contoh.com">
                 </div>
                 <div class="mb-3 text-start">
-                    <label class="form-label text-white-50" style="font-size:0.8rem;">Kata Sandi</label>
+                    <label class="form-label text-white-50" style="font-size:0.8rem;">{{ t('kata_sandi') }}</label>
                     <div class="input-group password-input">
-                        <input type="password" name="password" id="reg-password" class="form-control" placeholder="Minimal 6 karakter" required>
+                        <input type="password" name="password" id="reg-password" class="form-control" placeholder="{{ t('minimal_6_karakter') }}" required>
                         <button class="password-toggle" type="button" onclick="togglePasswordVisibility('reg-password', this)">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary w-100 mt-2">Daftar</button>
+                <button type="submit" class="btn btn-primary w-100 mt-2">{{ t('daftar') }}</button>
             </form>
             <script>
             function togglePasswordVisibility(inputId, btn) {
@@ -117,8 +139,7 @@
             }
             </script>
 
-            <p class="mt-4 text-muted small">
-                Sudah punya akun? <a href="/login">Masuk</a>
+            <p class="mt-4 text-muted small">{{ t('sudah_punya_akun') }} <a href="/login">{{ t('masuk') }}</a>
             </p>
         </div>
     </div>

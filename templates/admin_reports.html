@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Review Reports - Koneksaun Saudavel{% endblock %}
-{% block page_title %}Review Reports{% endblock %}
-{% block page_subtitle %}Kelola laporan domain{% endblock %}
+{% block title %}{{ t('review_reports_koneksaun_saudavel') }}{% endblock %}
+{% block page_title %}{{ t('review_reports') }}{% endblock %}
+{% block page_subtitle %}{{ t('kelola_laporan_domain') }}{% endblock %}
 {% block content %}
 
 <style>
@@ -16,45 +16,45 @@
 </style>
 
 <div id="whois-panel" class="content-card" style="margin-bottom:1rem;display:none;">
-    <div class="card-header"><i class="bi bi-shield-lock me-2"></i>Info WHOIS — <span id="whois-domain"></span>
-        <button class="btn btn-sm btn-outline-secondary float-end" onclick="closeWhois()">Tutup</button>
+    <div class="card-header"><i class="bi bi-shield-lock me-2"></i>{{ t('info_whois') }} <span id="whois-domain"></span>
+        <button class="btn btn-sm btn-outline-secondary float-end" onclick="closeWhois()">{{ t('tutup') }}</button>
     </div>
     <div class="card-body" id="whois-body">
-        <span class="whois-loading">Memuat...</span>
+        <span class="whois-loading">{{ t('memuat') }}</span>
     </div>
 </div>
 
 <div class="content-card" style="margin-bottom:1rem;">
-    <div class="card-header"><i class="bi bi-hourglass-split me-2"></i>Menunggu Tinjauan</div>
+    <div class="card-header"><i class="bi bi-hourglass-split me-2"></i>{{ t('menunggu_tinjauan') }}</div>
     <div class="card-body p-0">
         <div class="table-responsive">
         <table class="table mb-0">
-            <thead><tr><th>Domain</th><th>Kategori</th><th>Pelapor</th><th>Tanggal</th><th>Tindakan</th></tr></thead>
-            <tbody id="pending-body"><tr><td colspan="5" class="text-center text-muted py-4">Loading...</td></tr></tbody>
+            <thead><tr><th>{{ t('domain') }}</th><th>{{ t('kategori') }}</th><th>{{ t('pelapor') }}</th><th>{{ t('tanggal') }}</th><th>{{ t('tindakan') }}</th></tr></thead>
+            <tbody id="pending-body"><tr><td colspan="5" class="text-center text-muted py-4">{{ t('loading') }}</td></tr></tbody>
         </table>
         </div>
     </div>
 </div>
 
 <div class="content-card" style="margin-bottom:1rem;">
-    <div class="card-header"><i class="bi bi-check-circle me-2"></i>Laporan Disetujui</div>
+    <div class="card-header"><i class="bi bi-check-circle me-2"></i>{{ t('laporan_disetujui') }}</div>
     <div class="card-body p-0">
         <div class="table-responsive">
         <table class="table mb-0">
-            <thead><tr><th>Domain</th><th>Category</th><th>Reporter</th><th>Date</th><th>Action</th></tr></thead>
-            <tbody id="approved-body"><tr><td colspan="5" class="text-center text-muted py-4">Loading...</td></tr></tbody>
+            <thead><tr><th>{{ t('domain') }}</th><th>{{ t('category') }}</th><th>{{ t('reporter') }}</th><th>{{ t('date') }}</th><th>{{ t('action') }}</th></tr></thead>
+            <tbody id="approved-body"><tr><td colspan="5" class="text-center text-muted py-4">{{ t('loading') }}</td></tr></tbody>
         </table>
         </div>
     </div>
 </div>
 
 <div class="content-card" style="margin-bottom:1rem;">
-    <div class="card-header"><i class="bi bi-x-circle me-2"></i>Laporan Ditolak</div>
+    <div class="card-header"><i class="bi bi-x-circle me-2"></i>{{ t('laporan_ditolak') }}</div>
     <div class="card-body p-0">
         <div class="table-responsive">
         <table class="table mb-0">
-            <thead><tr><th>Domain</th><th>Kategori</th><th>Pelapor</th><th>Tanggal</th><th>Catatan</th></tr></thead>
-            <tbody id="rejected-body"><tr><td colspan="5" class="text-center text-muted py-4">Memuat...</td></tr></tbody>
+            <thead><tr><th>{{ t('domain') }}</th><th>{{ t('kategori') }}</th><th>{{ t('pelapor') }}</th><th>{{ t('tanggal') }}</th><th>{{ t('catatan') }}</th></tr></thead>
+            <tbody id="rejected-body"><tr><td colspan="5" class="text-center text-muted py-4">{{ t('memuat') }}</td></tr></tbody>
         </table>
         </div>
     </div>
@@ -74,31 +74,31 @@ function isValidDomain(domain) {
 
 async function loadWhois(domain) {
     if (!isValidDomain(domain)) {
-        alert('Invalid domain: ' + JSON.stringify(domain));
+        alert({{ t("invalid_domain")|tojson }} + JSON.stringify(domain));
         return;
     }
     const panel = document.getElementById('whois-panel');
     const body = document.getElementById('whois-body');
     document.getElementById('whois-domain').textContent = domain;
     panel.style.display = 'block';
-    body.innerHTML = '<span class="whois-loading">Memuat data WHOIS...</span>';
+    body.innerHTML = '<span class="whois-loading">{{ t('memuat_data_whois') }}</span>';
 
     try {
         const r = await fetch('/api/v1/whois/' + encodeURIComponent(domain), { credentials: 'include' });
         const d = await r.json();
 
         if (!d.success) {
-            body.innerHTML = '<span style="color:red;">Error WHOIS: ' + (d.error || 'Tidak dikenal') + '</span>';
+            body.innerHTML = '<span style="color:red;">' + {{ t("error_whois")|tojson }} + ' ' + (d.error || {{ t("tidak_dikenal")|tojson }}) + '</span>';
             return;
         }
 
-        const age = d.domain_age_days !== null ? d.domain_age_days + ' hari' : 'Tidak dikenal';
+        const age = d.domain_age_days !== null ? d.domain_age_days + ' ' + {{ t("hari")|tojson }} : {{ t("tidak_dikenal")|tojson }};
         const ageY = d.domain_age_years !== null ? '(' + d.domain_age_years + ' tahun)' : '';
-        const reg = d.registrar_name || 'Tidak dikenal';
+        const reg = d.registrar_name || {{ t("tidak_dikenal")|tojson }};
         const score = d.risk_score !== null ? d.risk_score : '?';
-        const level = d.risk_level || 'TIDAK DIKETAHUI';
-        const created = d.created_date ? d.created_date.split('T')[0] : 'Tidak dikenal';
-        const ns = (d.name_servers || []).slice(0, 3).join(', ') || 'Tidak dikenal';
+        const level = d.risk_level || {{ t("tidak_diketahui_caps")|tojson }};
+        const created = d.created_date ? d.created_date.split('T')[0] : {{ t("tidak_dikenal")|tojson }};
+        const ns = (d.name_servers || []).slice(0, 3).join(', ') || {{ t("tidak_dikenal")|tojson }};
 
         const badgeClass = {
             'HIGH': 'whois-high', 'MEDIUM': 'whois-medium',
@@ -109,7 +109,7 @@ async function loadWhois(domain) {
             <div class="row">
                 <div class="col-md-4">
                     <table class="table table-sm mb-0" style="font-size:0.85rem;">
-                        <tr><td class="text-muted" style="width:110px;">Usia Domain</td><td><strong>${age} ${ageY}</strong></td></tr>
+                        <tr><td class="text-muted" style="width:110px;">{{ t("usia_domain") }}</td><td><strong>${age} ${ageY}</strong></td></tr>
                         <tr><td class="text-muted">Dibuat</td><td>${created}</td></tr>
                         <tr><td class="text-muted">Registrar</td><td>${reg}</td></tr>
                         <tr><td class="text-muted">Name Server</td><td style="font-size:0.75rem;">${ns}</td></tr>
@@ -152,7 +152,7 @@ async function loadAll() {
         // Pending
         const pendBody = document.getElementById('pending-body');
         if (pend.length === 0) {
-            pendBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Tidak ada laporan pending</td></tr>';
+            pendBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">{{ t('tidak_ada_laporan_pending') }}</td></tr>';
         } else {
             pendBody.innerHTML = pend.map(r => {
                 const domainEsc = r.domain.replace(/'/g, "\\'");
@@ -161,15 +161,15 @@ async function loadAll() {
                     '<td><span class="badge badge-rejected">' + r.category + '</span></td>' +
                     '<td>' + (r.reporter || '') + '</td>' +
                     '<td>' + (r.created_at || '') + '</td>' +
-                    '<td><button class="btn btn-sm btn-success me-1" onclick="doApprove(' + r.id + ', \'' + domainEsc + '\')">Setujui</button>' +
-                    '<button class="btn btn-sm btn-danger" onclick="doReject(' + r.id + ', \'' + domainEsc + '\')">Tolak</button></td></tr>';
+                    '<td><button class="btn btn-sm btn-success me-1" onclick="doApprove(' + r.id + ', \'' + domainEsc + '\')">{{ t('setujui') }}</button>' +
+                    '<button class="btn btn-sm btn-danger" onclick="doReject(' + r.id + ', \'' + domainEsc + '\')">{{ t('tolak') }}</button></td></tr>';
             }).join('');
         }
 
         // Approved
         const apprBody = document.getElementById('approved-body');
         if (approv.length === 0) {
-            apprBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Tidak ada laporan disetujui</td></tr>';
+            apprBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">{{ t('tidak_ada_laporan_disetujui') }}</td></tr>';
         } else {
             apprBody.innerHTML = approv.map(r => {
                 const domainEsc = r.domain.replace(/'/g, "\\'");
@@ -178,14 +178,14 @@ async function loadAll() {
                     '<td><span class="badge badge-rejected">' + r.category + '</span></td>' +
                     '<td>' + (r.reporter || '') + '</td>' +
                     '<td>' + (r.created_at || '') + '</td>' +
-                    '<td><button class="btn btn-sm btn-warning" onclick="doRemove(' + r.id + ', \'' + domainEsc + '\', \'' + r.category + '\', this)">Hapus dari Blokir</button></td></tr>';
+                    '<td><button class="btn btn-sm btn-warning" onclick="doRemove(' + r.id + ', \'' + domainEsc + '\', \'' + r.category + '\', this)">{{ t('hapus_dari_blokir') }}</button></td></tr>';
             }).join('');
         }
 
         // Rejected
         const rejBody = document.getElementById('rejected-body');
         if (rejct.length === 0) {
-            rejBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">Tidak ada laporan ditolak</td></tr>';
+            rejBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">{{ t('tidak_ada_laporan_ditolak') }}</td></tr>';
         } else {
             rejBody.innerHTML = rejct.map(r => {
                 return '<tr>' +
@@ -209,7 +209,7 @@ async function doApprove(id, domain) {
             method: 'POST',
             credentials: 'include',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({notes: 'Approved via admin'})
+            body: JSON.stringify({notes: {{ t("approved_via_admin")|tojson }}})
         });
         const j = await r.json();
         msg.textContent = j.message || ('Selesai: ' + r.status);
@@ -227,7 +227,7 @@ async function doReject(id, domain) {
             method: 'POST',
             credentials: 'include',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({notes: 'Rejected via admin'})
+            body: JSON.stringify({notes: {{ t("rejected_via_admin")|tojson }}})
         });
         const j = await r.json();
         msg.textContent = j.message || ('Selesai: ' + r.status);
@@ -238,7 +238,7 @@ async function doReject(id, domain) {
 }
 
 async function doRemove(id, domain, category, btn) {
-    if (!confirm('Hapus ' + domain + ' dari daftar blokir ' + category + '?')) return;
+    if (!confirm({{ t("hapus")|tojson }} + ' ' + domain + ' ' + {{ t("dari_daftar_blokir")|tojson }} + ' ' + category + '?')) return;
     const msg = document.getElementById('msg-box');
     msg.textContent = 'Menghapus ' + domain + '...';
     btn.disabled = true;
@@ -247,7 +247,7 @@ async function doRemove(id, domain, category, btn) {
             method: 'DELETE',
             credentials: 'include',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({category: category, notes: 'Removed via admin'})
+            body: JSON.stringify({category: category, notes: {{ t("removed_via_admin")|tojson }}})
         });
         const j = await r.json();
         msg.textContent = j.message || ('Selesai: ' + r.status);

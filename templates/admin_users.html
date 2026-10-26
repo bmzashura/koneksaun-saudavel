@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}User Management - Koneksaun Saudavel{% endblock %}
-{% block page_title %}User Management{% endblock %}
-{% block page_subtitle %}Kelola pengguna terdaftar{% endblock %}
+{% block title %}{{ t('user_management_koneksaun_saudavel') }}{% endblock %}
+{% block page_title %}{{ t('user_management') }}{% endblock %}
+{% block page_subtitle %}{{ t('kelola_pengguna_terdaftar') }}{% endblock %}
 {% block content %}
         <div class="content-card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-people me-2"></i>Pengguna Terdaftar</span>
-                <button class="btn btn-sm btn-outline-light" onclick="loadUsers()" title="Refresh">
+                <span><i class="bi bi-people me-2"></i>{{ t('pengguna_terdaftar') }}</span>
+                <button class="btn btn-sm btn-outline-light" onclick="loadUsers()" title="{{ t('refresh') }}">
                     <i class="bi bi-arrow-clockwise"></i>
                 </button>
             </div>
@@ -15,16 +15,16 @@
                 <table class="table mb-0">
                     <thead>
                         <tr>
-                            <th>Nama Pengguna</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Dibuat</th>
-                            <th>Login Terakhir</th>
-                            <th>Tindakan</th>
+                            <th>{{ t('nama_pengguna') }}</th>
+                            <th>{{ t('role') }}</th>
+                            <th>{{ t('status') }}</th>
+                            <th>{{ t('dibuat') }}</th>
+                            <th>{{ t('login_terakhir') }}</th>
+                            <th>{{ t('tindakan') }}</th>
                         </tr>
                     </thead>
                     <tbody id="users-body">
-                        <tr><td colspan="6" class="text-center text-muted py-4">Memuat...</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-4">{{ t('memuat') }}</td></tr>
                     </tbody>
                 </table>
                 </div>
@@ -36,22 +36,21 @@
             <div class="modal-dialog">
                 <div class="modal-content" style="background:#1e293b;color:#e2e8f0;">
                     <div class="modal-header border-secondary">
-                        <h5 class="modal-title"><i class="bi bi-key me-2"></i>Reset Kata Sandi</h5>
+                        <h5 class="modal-title"><i class="bi bi-key me-2"></i>{{ t('reset_kata_sandi') }}</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p>Reset kata sandi untuk: <strong id="reset-pwd-user"></strong></p>
+                        <p>{{ t('reset_kata_sandi_untuk') }} <strong id="reset-pwd-user"></strong></p>
                         <input type="hidden" id="reset-pwd-user-id">
                         <div class="mb-3">
-                            <label class="form-label">Kata Sandi Baru</label>
-                            <input type="password" id="reset-pwd-new" class="form-control" minlength="6" placeholder="Minimal 6 karakter">
+                            <label class="form-label">{{ t('kata_sandi_baru') }}</label>
+                            <input type="password" id="reset-pwd-new" class="form-control" minlength="6" placeholder="{{ t('minimal_6_karakter') }}">
                         </div>
                     </div>
                     <div class="modal-footer border-secondary">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ t('batal') }}</button>
                         <button type="button" class="btn btn-primary" onclick="doResetPassword()">
-                            <i class="bi bi-check2 me-1"></i>Reset Kata Sandi
-                        </button>
+                            <i class="bi bi-check2 me-1"></i>{{ t('reset_kata_sandi') }}</button>
                     </div>
                 </div>
             </div>
@@ -84,6 +83,10 @@
         </style>
 
         <script>
+        const STATUS_LABEL = { active: {{ t("aktif")|tojson }}, pending: {{ t("pendente")|tojson }}, disabled: {{ t("nonaktif")|tojson }} };
+        const ROLE_LABEL = { admin: {{ t("admin")|tojson }}, user: {{ t("user")|tojson }} };
+        function fmtDate(s) { if (!s) return '-'; const p = String(s).split(' '); return p.length >= 4 ? p.slice(1, 4).join(' ') : s; }
+        function fmtDateTime(s) { if (!s) return '-'; const p = String(s).split(' '); if (p.length < 5) return s; const hm = p[4].split(':').slice(0, 2).join(':'); return p.slice(1, 4).join(' ') + ' ' + hm; }
         async function loadUsers() {
             const r = await fetch('/api/v1/users');
             const users = await r.json();
@@ -96,7 +99,7 @@
                         'disabled': '<i class="bi bi-ban-fill"></i>'
                     }[u.status] || '';
                     const statusClass = 'status-' + (u.status || 'other');
-                    const statusLabel = u.status ? u.status.toUpperCase() : u.status;
+                    const statusLabel = STATUS_LABEL[u.status] || u.status;
 
                     const roleIcon = u.role === 'admin'
                         ? '<i class="bi bi-shield-lock-fill"></i>'
@@ -105,24 +108,24 @@
 
                     let actions = '';
                     if (u.status === 'pending') {
-                        actions += `<button class="action-btn btn-approve" onclick="approveUser(${u.id})" title="Setujui pengguna">
-                                        <i class="bi bi-check-circle-fill"></i> Setujui
+                        actions += `<button class="action-btn btn-approve" onclick="approveUser(${u.id})" title="{{ t("setujui_pengguna") }}">
+                                        <i class="bi bi-check-circle-fill"></i> {{ t('setujui') }}
                                      </button>
-                                     <button class="action-btn btn-reject" onclick="rejectUser(${u.id},'${u.username}')" title="Tolak & hapus">
-                                        <i class="bi bi-trash-fill"></i> Tolak
+                                     <button class="action-btn btn-reject" onclick="rejectUser(${u.id},'${u.username}')" title="{{ t('tolak_dan_hapus') }}">
+                                        <i class="bi bi-trash-fill"></i> {{ t('tolak') }}
                                      </button>`;
                     } else if (u.status === 'active') {
-                        actions += `<button class="action-btn btn-disable" onclick="disableUser(${u.id})" title="Nonaktifkan akun">
-                                        <i class="bi bi-slash-circle-fill"></i> Nonaktifkan
+                        actions += `<button class="action-btn btn-disable" onclick="disableUser(${u.id})" title="{{ t("nonaktifkan_akun") }}">
+                                        <i class="bi bi-slash-circle-fill"></i> {{ t("nonaktifkan") }}
                                      </button>`;
                     } else if (u.status === 'disabled') {
-                        actions += `<button class="action-btn btn-enable" onclick="enableUser(${u.id})" title="Aktifkan akun">
-                                        <i class="bi bi-play-circle-fill"></i> Aktifkan
+                        actions += `<button class="action-btn btn-enable" onclick="enableUser(${u.id})" title="{{ t("aktifkan_akun") }}">
+                                        <i class="bi bi-play-circle-fill"></i> {{ t("aktifkan") }}
                                      </button>`;
                     }
 
-                    actions += `<button class="action-btn btn-reset" onclick="showResetPwd(${u.id},'${u.username}')" title="Reset kata sandi">
-                                    <i class="bi bi-key-fill"></i> Reset
+                    actions += `<button class="action-btn btn-reset" onclick="showResetPwd(${u.id},'${u.username}')" title="{{ t("reset_kata_sandi") }}">
+                                    <i class="bi bi-key-fill"></i> {{ t("reset") }}
                                  </button>`;
 
                     return '<tr>' +
@@ -130,20 +133,20 @@
                             <div style="font-weight:700;color:#0f172a;">${u.username}</div>
                             ${u.email ? '<div style="font-size:0.7rem;color:#64748b;margin-top:2px;">'+u.email+'</div>' : ''}
                          </td>` +
-                        `<td><span class="${roleClass}">${roleIcon} ${u.role.toUpperCase()}</span></td>` +
+                        `<td><span class="${roleClass}">${roleIcon} ${ROLE_LABEL[u.role] || u.role}</span></td>` +
                         `<td><span class="${statusClass}">${statusIcon} ${statusLabel}</span></td>` +
-                        `<td style="font-size:0.8rem;color:#64748b;">${u.created_at ? u.created_at.split(' ')[0] : '-'}</td>` +
-                        `<td style="font-size:0.8rem;color:#64748b;">${u.last_login || 'Belum pernah'}</td>` +
+                        `<td style="font-size:0.8rem;color:#64748b;">${fmtDate(u.created_at)}</td>` +
+                        `<td style="font-size:0.8rem;color:#64748b;">${u.last_login ? fmtDateTime(u.last_login) : {{ t("belum_pernah")|tojson }}}</td>` +
                         `<td><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">${actions}</div></td>` +
                         '</tr>';
                 }).join('');
             } else {
-                tb.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Tidak ada pengguna</td></tr>';
+                tb.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">{{ t('tidak_ada_pengguna') }}</td></tr>';
             }
         }
 
         async function approveUser(userId) {
-            if (!confirm('Setujui pengguna ini?')) return;
+            if (!confirm({{ t("setujui_pengguna_ini")|tojson }})) return;
             const r = await fetch(`/api/v1/users/${userId}/approve`, {method:'POST'});
             const d = await r.json();
             if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); return; }
@@ -151,7 +154,7 @@
         }
 
         async function rejectUser(userId, username) {
-            if (!confirm('Tolak dan HAPUS pengguna ' + username + '? Ini tidak bisa dibatalkan.')) return;
+            if (!confirm({{ t("tolak_dan_hapus_pengguna")|tojson }} + ' ' + username + '? ' + {{ t("tidak_bisa_dibatalkan")|tojson }})) return;
             const r = await fetch(`/api/v1/users/${userId}/reject`, {method:'POST'});
             const d = await r.json();
             if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); return; }
@@ -159,7 +162,7 @@
         }
 
         async function disableUser(userId) {
-            if (!confirm('Nonaktifkan akun pengguna ini?')) return;
+            if (!confirm({{ t("nonaktifkan_akun_pengguna_ini")|tojson }})) return;
             const r = await fetch(`/api/v1/users/${userId}/disable`, {method:'POST'});
             const d = await r.json();
             if (!r.ok) { alert('Error: ' + (d.error||'Unknown')); return; }
@@ -183,7 +186,7 @@
         async function doResetPassword() {
             const userId = document.getElementById('reset-pwd-user-id').value;
             const newPwd = document.getElementById('reset-pwd-new').value;
-            if (!newPwd || newPwd.length < 6) { alert('Kata sandi harus minimal 6 karakter.'); return; }
+            if (!newPwd || newPwd.length < 6) { alert({{ t("kata_sandi_harus_minimal_6_karakter")|tojson }}); return; }
             const r = await fetch(`/api/v1/users/${userId}/reset-password`, {
                 method:'PUT',
                 headers:{'Content-Type':'application/json'},

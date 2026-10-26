@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}My Reports - Koneksaun Saudavel{% endblock %}
-{% block page_title %}My Reports{% endblock %}
-{% block page_subtitle %}Laporan yang Anda kirimkan{% endblock %}
+{% block title %}{{ t('my_reports_koneksaun_saudavel') }}{% endblock %}
+{% block page_title %}{{ t('my_reports') }}{% endblock %}
+{% block page_subtitle %}{{ t('laporan_yang_anda_kirimkan') }}{% endblock %}
 {% block content %}
 <div class="content-card">
-            <div class="card-header"><i class="bi bi-flag me-2"></i>Laporan Saya</div>
-            <div class="card-body p-0"><table class="table mb-0"><thead><tr><th>Domain</th><th>Kategori</th><th>Status</th><th>Dikirim</th></tr></thead><tbody id="reports-body"><tr><td colspan="4" class="text-center text-muted py-4">Memuat...</td></tr></tbody></table></div>
+            <div class="card-header"><i class="bi bi-flag me-2"></i>{{ t('laporan_saya') }}</div>
+            <div class="card-body p-0"><table class="table mb-0"><thead><tr><th>{{ t('domain') }}</th><th>{{ t('kategori') }}</th><th>{{ t('status') }}</th><th>{{ t('dikirim') }}</th></tr></thead><tbody id="reports-body"><tr><td colspan="4" class="text-center text-muted py-4">{{ t('memuat') }}</td></tr></tbody></table></div>
         </div>
         <script>
         async function loadReports() {
@@ -14,7 +14,7 @@
                 const r = await fetch('/api/v1/reports/mine');
                 const d = await r.json();
                 if (d.error) {
-                    tb.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i>Error: ' + d.error + '</td></tr>';
+                    tb.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i>{{ t("error_label") }} ' + d.error + '</td></tr>';
                     return;
                 }
                 if (d.reports && d.reports.length) {
@@ -27,10 +27,10 @@
                         '</tr>'
                     ).join('');
                 } else {
-                    tb.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Belum ada laporan dikirim</td></tr>';
+                    tb.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">{{ t('belum_ada_laporan_dikirim') }}</td></tr>';
                 }
             } catch(e) {
-                tb.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i>Gagal memuat laporan. Pastikan Anda sudah login.</td></tr>';
+                tb.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i>{{ t('gagal_memuat_laporan_pastikan_anda_sudah_login') }}</td></tr>';
             }
         }
         loadReports();

@@ -7,6 +7,7 @@ from datetime import datetime
 
 from app.database import get_db
 from app.auth import hash_password, verify_password, login_required, admin_required, get_current_user, is_admin
+from app.i18n import flash_translated
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -156,7 +157,7 @@ def login_submit():
     password = request.form.get('password', '')
 
     if not username or not password:
-        flash('Username and password required', 'error')
+        flash_translated('username_password_wajib', 'error')
         return redirect('/login')
 
     db = get_db()
@@ -166,14 +167,14 @@ def login_submit():
     ).fetchone()
 
     if not user or not verify_password(password, user['password_hash']):
-        flash('Invalid credentials', 'error')
+        flash_translated('kredensial_invalidu', 'error')
         return redirect('/login')
 
     if user['status'] == 'pending':
-        flash('Account pending approval. Contact admin.', 'error')
+        flash_translated('konta_pendente_aprovasaun', 'error')
         return redirect('/login')
     if user['status'] == 'disabled':
-        flash('Account disabled. Contact admin.', 'error')
+        flash_translated('konta_desativadu', 'error')
         return redirect('/login')
 
     db.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?", (user['id'],))
@@ -194,18 +195,18 @@ def register_submit():
     email = request.form.get('email', '').strip()
 
     if not username or not password:
-        flash('Username and password required', 'error')
+        flash_translated('username_password_wajib', 'error')
         return redirect('/register')
 
     if len(password) < 6:
-        flash('Password must be at least 6 characters', 'error')
+        flash_translated('kata_sandi_harus_minimal_6_karakter', 'error')
         return redirect('/register')
 
     db = get_db()
 
     existing = db.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
     if existing:
-        flash('Username already taken', 'error')
+        flash_translated('naran_utilizador_iha_eziste', 'error')
         return redirect('/register')
 
     password_hash, _ = hash_password(password)
@@ -217,7 +218,7 @@ def register_submit():
         """, (username, password_hash, 'user', email))
         db.commit()
 
-        flash('Registration submitted. Waiting for admin approval.', 'info')
+        flash_translated('rejistu_submete_espera_aprovasaun', 'info')
         return redirect('/login')
     except Exception as e:
         flash(str(e), 'error')
@@ -251,11 +252,11 @@ def change_password():
 
 
     if not new_password or len(new_password) < 6:
-        flash('New password must be at least 6 characters.', 'error')
+        flash_translated('liafuan_xave_foun_minimal_6_karakter', 'error')
         return redirect('/profile')
 
     if new_password != confirm_password:
-        flash('New password and confirmation do not match.', 'error')
+        flash_translated('liafuan_xave_foun_konfirmasaun_la_igual', 'error')
         return redirect('/profile')
 
     db = get_db()
@@ -264,14 +265,14 @@ def change_password():
     ).fetchone()
 
     if not verify_password(current_password, user['password_hash']):
-        flash('Current password is incorrect.', 'error')
+        flash_translated('liafuan_xave_atual_sala', 'error')
         return redirect('/profile')
 
     pw_hash, _ = hash_password(new_password)
     db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (pw_hash, current['id']))
     db.commit()
 
-    flash('Password updated successfully.', 'info')
+    flash_translated('liafuan_xave_atualizadu_konsege', 'info')
     return redirect('/profile')
 
 
@@ -286,22 +287,22 @@ def admin_reset_password():
     current_user = get_current_user()
 
     if not target_id or target_id == current_user['id']:
-        flash('Invalid target user.', 'error')
+        flash_translated('utilizador_alvo_invalidu', 'error')
         return redirect('/profile')
 
     if not new_password or len(new_password) < 6:
-        flash('Password must be at least 6 characters.', 'error')
+        flash_translated('kata_sandi_harus_minimal_6_karakter', 'error')
         return redirect('/profile')
 
     db = get_db()
     target = db.execute("SELECT id FROM users WHERE id = ?", (target_id,)).fetchone()
     if not target:
-        flash('User not found.', 'error')
+        flash_translated('utilizador_la_hetan', 'error')
         return redirect('/profile')
 
     pw_hash, _ = hash_password(new_password)
     db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (pw_hash, target_id))
     db.commit()
 
-    flash(f'Password for user ID {target_id} reset successfully.', 'info')
+    flash_translated('liafuan_xave_reset_konsege', 'info', uid=target_id)
     return redirect('/profile')

@@ -13,6 +13,12 @@ from app.public_routes import public_bp
 from app.auth_routes import auth_bp
 from app.reports import reports_bp
 from app.database import init_db, get_db, close_db
+from app.i18n import (
+    LANG_NAMES,
+    available_languages,
+    get_lang,
+    translate,
+)
 
 # Base paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -34,7 +40,7 @@ def create_app():
     app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
     app.config['TEMPLATES_AUTO_RELOAD'] = True
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-    app.config['SESSION_COOKIE_SECURE'] = False  # Set True if served behind HTTPS proxy (Cloudflare)
+    app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False').lower() == 'true'  # True when served behind HTTPS proxy
 
     # Security headers — applied to all responses
     @app.after_request
@@ -51,6 +57,31 @@ def create_app():
 
     # Register teardown
     app.teardown_appcontext(close_db)
+
+    # Internationalisation — inject t() into every template
+    @app.context_processor
+    def inject_i18n():
+        lang = get_lang()
+        return {
+            't': lambda key, **kwargs: translate(key, lang, **kwargs),
+            'current_lang': lang,
+            'lang_names': LANG_NAMES,
+            'lang_codes': available_languages(),
+        }
+
+    @app.after_request
+    def _strip_werkzeug_redirect_page(response):
+        """Drop Werkzeug's English auto-redirect page.
+
+        Werkzeug answers a redirect() with an HTML body that says
+        "You should be redirected automatically to the target URL ...".
+        That is English prose served by a Tetum-localised app, so the
+        body is cleared; browsers follow the Location header regardless.
+        """
+        if response.status_code in (301, 302, 303, 307, 308):
+            if response.mimetype == 'text/html' and b'redirected automatically' in response.get_data():
+                response.set_data(b'')
+        return response
 
     # Register blueprints
     app.register_blueprint(api_bp, url_prefix='/api/v1')
