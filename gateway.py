@@ -10,12 +10,20 @@ Falls back to a minimal page if the Flask app is unavailable.
 
 import http.server
 import logging
+import urllib.parse
 from pathlib import Path
+
+try:
+    from app.translations import TRANSLATIONS
+except ImportError:
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from app.translations import TRANSLATIONS
 
 GATEWAY_IP = '0.0.0.0'
 GATEWAY_PORT = 80
 
-LOG_DIR = Path(__file__).parent.parent / "logs"
+LOG_DIR = Path(__file__).resolve().parent / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(
@@ -30,11 +38,11 @@ logger = logging.getLogger(__name__)
 
 
 BLOCKED_PAGE = """<!DOCTYPE html>
-<html lang="en">
+<html lang="{lang}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domain Terblokir — Koneksaun Saudavel</title>
+    <title>{title}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <style>
@@ -104,41 +112,45 @@ BLOCKED_PAGE = """<!DOCTYPE html>
 <body>
     <div class="blocked-card">
         <div class="shield-icon"><i class="bi bi-shield-x"></i></div>
-        <h1 class="blocked-title">Domain Terblokir</h1>
+        <h1 class="blocked-title">{blocked_title}</h1>
         <p class="blocked-subtitle">
-            Domain yang Anda coba akses telah diblokir melalui jaringan ini.<br>
-            Akses dibatasi untuk menjaga keamanan dan tanggung jawab internet.
+            {subtitle_1}<br>
+            {subtitle_2}
         </p>
         <div class="domain-box">
-            <div class="domain-label">Domain yang Diblokir</div>
+            <div class="domain-label">{domain_label}</div>
             <div class="domain-value">{domain}</div>
         </div>
         <div class="info-grid">
             <div class="info-item">
-                <div class="info-label">Kategori</div>
+                <div class="info-label">{category_label}</div>
                 <div class="info-value">
-                    <span class="badge-category badge-{category}">{category_upper}</span>
+                    <span class="badge-category badge-{category}">{category_name}</span>
                 </div>
             </div>
             <div class="info-item">
-                <div class="info-label">Waktu</div>
+                <div class="info-label">{time_label}</div>
                 <div class="info-value">{timestamp}</div>
             </div>
             <div class="info-item">
-                <div class="info-label">Status</div>
-                <div class="info-value" style="color: #f87171;">DIBLOKIR</div>
+                <div class="info-label">{status_label}</div>
+                <div class="info-value" style="color: #f87171;">{status_value}</div>
             </div>
             <div class="info-item">
-                <div class="info-label">Dilindungi Oleh</div>
+                <div class="info-label">{protected_label}</div>
                 <div class="info-value">Koneksaun Saudavel</div>
             </div>
         </div>
         <a href="/" class="btn-dashboard">
-            <i class="bi bi-house me-1"></i>Kembali ke Beranda
+            <i class="bi bi-house me-1"></i>{back_home}
         </a>
         <div class="footer-note">
-            Ingin mengajukan keberatan? Hubungi administrator jaringan.<br>
-            <a href="/login">Login ke Dashboard</a> untuk detail lebih lanjut.
+            {footer_note}<br>
+            <a href="/login">{login_link}</a> {login_detail}
+        </div>
+        <div style="margin-top:1.5rem;display:flex;justify-content:center;gap:15px;font-size:0.8rem;">
+            <a href="?lang=tet" style="color:{tet_color};text-decoration:none;font-weight:{tet_weight};">Tetum</a> |
+            <a href="?lang=id" style="color:{id_color};text-decoration:none;font-weight:{id_weight};">Bahasa Indonesia</a>
         </div>
     </div>
 </body>
@@ -153,6 +165,35 @@ class BlockedDomainHandler(http.server.BaseHTTPRequestHandler):
         """Suppress default stderr logging."""
         pass
 
+    def get_lang(self):
+        """Resolve language preference (query > cookie > accept-language > default 'tet')."""
+        query_lang = None
+        if '?' in self.path:
+            qs = urllib.parse.parse_qs(self.path.split('?', 1)[1])
+            if 'lang' in qs and qs['lang'][0] in ('tet', 'id'):
+                query_lang = qs['lang'][0]
+        if query_lang:
+            return query_lang, True
+
+        cookie_str = self.headers.get('Cookie', '')
+        for part in cookie_str.split(';'):
+            part = part.strip()
+            if part.startswith('ks_lang='):
+                val = part.split('=', 1)[1].strip()
+                if val in ('tet', 'id'):
+                    return val, False
+
+        accept = self.headers.get('Accept-Language', '').lower()
+        if 'id' in accept and 'tet' not in accept:
+            return 'id', False
+        return 'tet', False
+
+    def t(self, key, lang):
+        table = TRANSLATIONS.get(lang) or {}
+        if key in table:
+            return table[key]
+        return TRANSLATIONS.get('tet', {}).get(key, key)
+
     def do_GET(self):
         """Serve blocked domain notification page."""
         host = self.headers.get('Host', '')
@@ -163,18 +204,41 @@ class BlockedDomainHandler(http.server.BaseHTTPRequestHandler):
         domain = host.split(':')[0]
         timestamp = self.headers.get('X-Block-Timestamp', '')
         category = self.headers.get('X-Block-Category', 'blocked')
+        lang, set_cookie = self.get_lang()
 
         if not timestamp:
             from datetime import datetime
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        logger.info(f"Blocked domain request: {domain} (category: {category})")
+        logger.info(f"Blocked domain request: {domain} (category: {category}, lang: {lang})")
+
+        cat_keys = {'ads': 'iklan_pelacak', 'porn': 'dewasa', 'gambling': 'judi', 'other': 'lainnya'}
+        category_name = self.t(cat_keys.get(category, 'blokadu'), lang)
 
         page = BLOCKED_PAGE.format(
+            lang=lang,
+            title=self.t('domain_blocked_koneksaun_saudavel', lang),
+            blocked_title=self.t('akses_diblokir', lang),
+            subtitle_1=self.t('domain_yang_anda_coba_akses_telah_diblokir_di_jaringan_ini', lang),
+            subtitle_2=self.t('akses_dibatasi_untuk_menjaga_keamanan_jaringan_dan_penggunaan_internet_yang_bertanggung_jawab', lang),
+            domain_label=self.t('domain_terblokir', lang),
             domain=domain,
+            category_label=self.t('kategori', lang),
             category=category,
-            category_upper=category.upper(),
-            timestamp=timestamp
+            category_name=category_name,
+            time_label=self.t('waktu', lang),
+            timestamp=timestamp,
+            status_label=self.t('status', lang),
+            status_value=self.t('terblokir_caps', lang),
+            protected_label=self.t('dilindungi_oleh', lang),
+            back_home=self.t('kembali_ke_beranda', lang),
+            footer_note=self.t('ingin_mengajukan_banding_hubungi_administrator_jaringan_anda', lang),
+            login_link=self.t('login_ke_dashboard', lang),
+            login_detail=self.t('untuk_detail_lebih_lanjut', lang),
+            tet_color='#60a5fa' if lang == 'tet' else '#94a3b8',
+            tet_weight='700' if lang == 'tet' else '400',
+            id_color='#60a5fa' if lang == 'id' else '#94a3b8',
+            id_weight='700' if lang == 'id' else '400',
         )
         body = page.encode('utf-8')
 
@@ -183,6 +247,8 @@ class BlockedDomainHandler(http.server.BaseHTTPRequestHandler):
         self.send_header('Content-Length', len(body))
         self.send_header('X-Blocked-Domain', domain)
         self.send_header('X-Block-Category', category)
+        if set_cookie:
+            self.send_header('Set-Cookie', f'ks_lang={lang}; Path=/; Max-Age=31536000; SameSite=Lax')
         self.end_headers()
         self.wfile.write(body)
 

@@ -291,7 +291,10 @@ def delete_report(report_id):
 def _reload_dns_blocklists():
     """Send SIGUSR1 to DNS server to reload blocklists. Falls back to service restart on failure."""
     import subprocess
-    pid_file = Path("/opt/ks/koneksaun-saudavel/dns.pid")
+    app_root = Path(__file__).resolve().parent.parent
+    pid_file = app_root / "dns.pid"
+    if not pid_file.exists():
+        pid_file = Path("/opt/ks/koneksaun-saudavel/dns.pid")
     if not pid_file.exists():
         logger.error("dns.pid not found — cannot reload blocklists")
         return False

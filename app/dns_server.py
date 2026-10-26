@@ -10,6 +10,7 @@ import logging
 import signal
 import sys
 import os
+import threading
 from pathlib import Path
 from datetime import datetime
 
@@ -302,6 +303,70 @@ def log_query(domain: str, blocked: bool, category: str, client_ip: str):
         logger.debug(f"Failed to log query: {e}")
 
 
+# --- DNS over TCP (RFC 7766) ---------------------------------------------
+# A UDP-only listener makes every resolver that falls back to TCP fail with
+# "connection refused": the client retries the query over TCP as soon as the
+# UDP answer is truncated, and stub resolvers routinely use TCP for anything
+# bigger than 512 bytes. Over TCP each message is prefixed with its 2-byte
+# big-endian length.
+MAX_DNS_MESSAGE = 65535
+TCP_IDLE_TIMEOUT = 15
+
+
+def read_tcp_message(conn: socket.socket) -> bytes:
+    """Read one length-prefixed DNS message from a TCP connection."""
+    header = b''
+    while len(header) < 2:
+        chunk = conn.recv(2 - len(header))
+        if not chunk:
+            return b''
+        header += chunk
+
+    (length,) = struct.unpack('!H', header)
+    if length == 0:
+        return b''
+
+    body = b''
+    while len(body) < length:
+        chunk = conn.recv(min(4096, length - len(body)))
+        if not chunk:
+            break
+        body += chunk
+    return body
+
+
+def handle_tcp_client(conn: socket.socket, client_addr: tuple):
+    """Serve DNS over TCP for one client connection (may carry many queries)."""
+    with conn:
+        conn.settimeout(TCP_IDLE_TIMEOUT)
+        try:
+            while True:
+                query_data = read_tcp_message(conn)
+                if not query_data:
+                    break
+                response = handle_dns_query(query_data, client_addr)
+                if response:
+                    conn.sendall(struct.pack('!H', len(response)) + response)
+        except socket.timeout:
+            logger.debug(f"TCP client {client_addr[0]} timed out")
+        except Exception as e:
+            logger.error(f"TCP client {client_addr[0]} error: {e}")
+
+
+def tcp_server_loop(tcp_sock: socket.socket):
+    """Accept loop for DNS over TCP; runs in its own thread."""
+    while True:
+        try:
+            conn, client_addr = tcp_sock.accept()
+        except OSError:
+            break
+        threading.Thread(
+            target=handle_tcp_client,
+            args=(conn, client_addr),
+            daemon=True,
+        ).start()
+
+
 def signal_handler(signum, frame):
     if signum == signal.SIGUSR1:
         logger.info("Received SIGUSR1 - reloading blocklists")
@@ -321,7 +386,7 @@ def main():
     # Load blocklists
     load_blocklists()
 
-    logger.info(f"DNS listening on 0.0.0.0:{DNS_PORT}")
+    logger.info(f"DNS listening on 0.0.0.0:{DNS_PORT} (UDP + TCP)")
     logger.info(f"Blocklists: ads={len(_blocklists['ads'])}, porn={len(_blocklists['porn'])}, gambling={len(_blocklists['gambling'])}, other={len(_blocklists['other'])}")
 
     # Setup signals
@@ -333,9 +398,18 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
+    # Create TCP socket so resolvers that fall back from UDP are served
+    tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tcp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
     try:
         sock.bind(('0.0.0.0', DNS_PORT))
-        logger.info(f"DNS Server ready on port {DNS_PORT}")
+        tcp_sock.bind(('0.0.0.0', DNS_PORT))
+        tcp_sock.listen(64)
+
+        threading.Thread(target=tcp_server_loop, args=(tcp_sock,), daemon=True).start()
+
+        logger.info(f"DNS Server ready on port {DNS_PORT} (UDP + TCP)")
 
         while True:
             data, addr = sock.recvfrom(512)
@@ -350,6 +424,7 @@ def main():
         logger.info("DNS Server stopped by user")
     finally:
         sock.close()
+        tcp_sock.close()
         if PID_FILE.exists():
             PID_FILE.unlink()
 
