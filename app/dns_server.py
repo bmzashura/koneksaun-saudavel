@@ -398,17 +398,29 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-    # Create TCP socket so resolvers that fall back from UDP are served
-    tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    tcp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    # Create TCP socket so resolvers that fall back from UDP are served.
+    # A failed TCP bind must never take the UDP listener down with it, so
+    # this is best-effort: the server keeps serving over UDP and logs loudly.
+    tcp_sock = None
+    try:
+        tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        tcp_sock.bind(('0.0.0.0', DNS_PORT))
+        tcp_sock.listen(64)
+        threading.Thread(target=tcp_server_loop, args=(tcp_sock,), daemon=True).start()
+        logger.info(f"DNS over TCP enabled on 0.0.0.0:{DNS_PORT}")
+    except OSError as e:
+        logger.error(
+            f"Could not bind TCP {DNS_PORT} ({e}) - continuing with UDP only. "
+            "A TCP port already in use (e.g. systemd-resolved stub listener "
+            "on 127.0.0.53) blocks the wildcard bind."
+        )
+        if tcp_sock is not None:
+            tcp_sock.close()
+            tcp_sock = None
 
     try:
         sock.bind(('0.0.0.0', DNS_PORT))
-        tcp_sock.bind(('0.0.0.0', DNS_PORT))
-        tcp_sock.listen(64)
-
-        threading.Thread(target=tcp_server_loop, args=(tcp_sock,), daemon=True).start()
-
         logger.info(f"DNS Server ready on port {DNS_PORT} (UDP + TCP)")
 
         while True:
@@ -424,7 +436,8 @@ def main():
         logger.info("DNS Server stopped by user")
     finally:
         sock.close()
-        tcp_sock.close()
+        if tcp_sock is not None:
+            tcp_sock.close()
         if PID_FILE.exists():
             PID_FILE.unlink()
 
